@@ -1,6 +1,6 @@
 /* BB_VERSION 1.0.0 · 2026-10-07 · botbuilders-portal · communities.css */
 
-/* ============================================================
+ /* ============================================================
    Botbuilders client portal — group custom CSS
    ============================================================
 
@@ -22,22 +22,19 @@
 
 /* ============================================================
    1. ALL PAGES
+   ============================================================
+
+   MOVED OUT — these three now live in the portal-level (general) CSS,
+   which already carries the identical rules:
+
+       #communities-sidebar-group-switcher-trigger
+       .tabs-wrapper > a:not(#group-tabs-nav-settings)
+       #search-widget-container
+
+   They were duplicated in both files, so editing one had no visible
+   effect. Portal chrome belongs to the general file; this box keeps
+   only what lives inside the group's own content area.
    ============================================================ */
-
-/* Community group switcher */
-#communities-sidebar-group-switcher-trigger {
-  display: none !important;
-}
-
-/* Group tabs — show only Settings */
-.tabs-wrapper > a:not(#group-tabs-nav-settings) {
-  display: none !important;
-}
-
-/* Top search bar */
-#search-widget-container {
-  display: none !important;
-}
 
 
 /* ============================================================

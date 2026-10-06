@@ -120,27 +120,18 @@ for days. A pinned tag is a new URL, so there is nothing to invalidate.
    `curl -sI https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.0/dist/portal.js | head -1`
 5. Paste the snippets into the fields, hard refresh, check `BB_VERSION`.
 
-## Source provenance (read this before the first real release)
+## Source provenance
 
-The repo was assembled on 2026-10-07 from the files that were on disk, not
-from a fresh export of the live fields. Two of them are not current:
+`src/` holds the live field contents as of 2026-10-07, exported from the portal
+admin. Two notes for anyone re-exporting:
 
-- **`src/portal.js`** is the 24 Sep 2026 copy of the Portal → Custom JS field.
-  It has 4 `<script>` blocks; the live field was described as having 5 and
-  containing the markers `bbBobHost`, `FOOTER_PATHS` and `spriteBase`, which
-  this copy does not. **Acceptance check 4 fails until the current field
-  contents replace it.** Copy the live field into `src/portal.js` as-is
-  (keep the `<script>` wrappers) and rebuild.
-- **`src/portal.css`** is a placeholder comment. The Portal → Custom CSS field
-  was not on disk at all. Copy the live field into it and rebuild. **Do not
-  paste `field-snippets/portal-css.css` into the portal before that** — it
-  would import an empty stylesheet and strip the portal's styling.
-
-`src/courses.js`, `src/courses.css`, `src/communities.js` and
-`src/communities.css` are the 7 Oct 2026 copies. Three of those had been saved
-by TextEdit as RTF and were converted back to plain text with `textutil`; the
-result was diffed for smart-quote damage (none) and passes `node --check`.
-`npm run check` will refuse any `src/` file that is RTF again.
+- Files that reach disk via TextEdit tend to be saved as RTF. `courses.js` and
+  `communities.js` were, and were converted back with `textutil -convert txt`,
+  then checked for smart-quote damage (none) and run through `node --check`.
+  `npm run check` refuses any `src/` file that is RTF.
+- The exported `communities.css` was truncated at the very end: the final
+  `#event-share-button` rule was missing its closing `}` and ended in a stray
+  `\`. That brace was restored; nothing else in the file was changed.
 
 ## Constraints
 

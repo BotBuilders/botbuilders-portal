@@ -86,8 +86,8 @@ try {(() => {
     ];
     const grid = document.querySelector('.grid.grid-cols-12');
     if(!grid) return;
-    let col = document.getElementById('bb-right-col');
-    if(!col){ col = document.createElement('div'); col.id = 'bb-right-col'; grid.appendChild(col); }
+    let col = document.getElementById('bb-course-banners');
+    if(!col){ col = document.createElement('div'); col.id = 'bb-course-banners'; grid.appendChild(col); }
     if(col.dataset.built) return;            // build once
     let html = '';
     RIGHT_BANNERS.forEach(function(b){
@@ -109,7 +109,7 @@ try {(() => {
       const idx=nodes.indexOf(activeLink);
       for(let i=idx;i>=0;i--){ if(nodes[i].classList.contains('category-title')){ eyebrow=nodes[i].textContent.trim(); break; } }
     }
-    eyebrow=eyebrow.replace(/^[\-\+−\s]+/,'').trim();
+    eyebrow=eyebrow.replace(/^[\-\+− \s]+/,'').trim();
 
     let head=document.getElementById('bb-lesson-head');
     if(!head){ head=document.createElement('div'); head.id='bb-lesson-head'; main.insertBefore(head, main.firstChild); }
@@ -159,6 +159,20 @@ try {(() => {
   // Instead: an empty #bb-bot-slot reserves the right column in the grid, and the
   // real bot (#bb-bot-host, attached to <body>) is pinned over that slot.
   const BOT_HEIGHT = 0.6;   // bot height as a share of the screen height
+
+  /* OWNERSHIP: the Bob host and the widget loader belong to the PORTAL-LEVEL
+     custom JS. It parks a [data-bob-embed] box on <body> before widget.js
+     initialises, which matters because the widget looks for its host exactly
+     once, at init, and never reconsiders.
+     This file no longer injects widget.js and no longer creates its own box —
+     it borrows the shared one and only decides where it sits on a lesson page.
+     That also retires the old 5-try remount loop, which existed purely because
+     two fields were competing to own the same widget. */
+  function sharedEmbed(){
+    return (typeof window.bbBobHost === 'function' ? window.bbBobHost() : null)
+        || document.querySelector('[data-bob-embed]');
+  }
+
   function buildBotCol(){
     const grid=document.querySelector('#post-details-container > .grid.grid-cols-12');
     if(grid && !document.getElementById('bb-bot-slot')){
@@ -166,41 +180,21 @@ try {(() => {
       slot.id='bb-bot-slot';
       grid.appendChild(slot);
     }
-    if(!document.getElementById('bb-bot-host')){
-      const host=document.createElement('div');
+    let host=document.getElementById('bb-bot-host');
+    if(!host){
+      host=document.createElement('div');
       host.id='bb-bot-host';
       host.style.cssText='position:fixed;z-index:20;display:none;background:#fff;border:1px solid #e4e7ec;'
         +'border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);';
-      host.innerHTML='<div data-bob-embed style="height:100%"></div>';
       document.body.appendChild(host);
     }
-    if(!document.getElementById('bb-bob-script')){
-      const s=document.createElement('script');
-      s.id='bb-bob-script';
-      s.src=BOB_SRC;
-      s.async=true;
-      document.head.appendChild(s);
-      lastMountAt=Date.now();
+    const emb=sharedEmbed();
+    if(emb && emb.parentElement!==host){
+      emb.removeAttribute('style');      // drop the parked off-screen positioning
+      emb.style.height='100%';
+      host.appendChild(emb);
     }
     placeBot();
-  }
-
-  // The widget only fills a [data-bob-embed] box that exists when its script runs.
-  // If our box is still empty (e.g. the widget was already loaded on another page),
-  // load the script again so it mounts into the box. Max 5 tries, 3s apart.
-  const BOB_SRC='https://selfhelp.ai/widget.js?t=bk_XHblDNcDGujWMEOjPaZKuTzs';
-  let mountTries=0, lastMountAt=0;
-  function ensureBotMounted(){
-    const host=document.getElementById('bb-bot-host');
-    const emb=host && host.querySelector('[data-bob-embed]');
-    if(!emb) return;
-    if(emb.children.length){ mountTries=0; return; }
-    if(host.style.display==='none') return;
-    if(mountTries>=5 || Date.now()-lastMountAt<3000) return;
-    mountTries++; lastMountAt=Date.now();
-    const s=document.createElement('script');
-    s.src=BOB_SRC; s.async=true;
-    document.head.appendChild(s);
   }
   function placeBot(){
     const host=document.getElementById('bb-bot-host');
@@ -227,7 +221,7 @@ try {(() => {
   window.addEventListener('resize', () => { setShellTop(); placeBot(); });
   document.addEventListener('scroll', placeBot, true);   // keep bot aligned if the page scrolls
   // the portal loads lessons in stages, so keep re-aligning the bot (cheap: reads one box)
-  setInterval(() => { placeBot(); ensureBotMounted(); }, 500);
+  setInterval(placeBot, 500);
 
   // ---- loop-safe scheduler ----
   let lastKey = '';

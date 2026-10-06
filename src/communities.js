@@ -31,72 +31,31 @@
    *   3. portal JWT claims  - clientPortalMeta.contactId
    *   4. legacy localStorage - only for not-yet-migrated portals
    * ------------------------------------------------------------------ */
+  /* Identity is owned by the PORTAL-LEVEL custom JS, which exposes it as
+     window.bbGetIdentity(). It resolves the same four sources this function
+     used to (live Pinia -> __NUXT__ payload -> JWT clientPortalMeta -> legacy
+     localStorage) and caches the webhook result, so two scripts no longer
+     resolve the same contact and POST to the webhook independently.
+     The inline fallback below only runs if the general file failed to load. */
   function getClientPortalUserInfo(){
-    var email=null, contactId=null, userId=null;
-
-    function absorb(s){
-      if(!s) return;
-      if(s.auth){
-        contactId = contactId || s.auth.contactId || null;
-        userId    = userId    || s.auth.userId    || null;
-      }
-      var p = s["current-user"] && s["current-user"].profile;
-      if(p){
-        contactId = contactId || p.contactId || null;
-        userId    = userId    || p._id       || null;
-        email     = email     || p.email     || null;
-      }
+    if (typeof window.bbGetIdentity === 'function') {
+      try {
+        var id = window.bbGetIdentity();
+        if (id && id.contactId) return { email: id.email || null, contactId: id.contactId, userId: id.userId || null };
+      } catch(e){}
     }
-    function tokenFrom(s){ return (s && s.auth && s.auth.token) || null; }
-
-    var live=null, payload=null;
-
-    // 1) live Pinia state, via the mounted Vue app
-    try{
+    // fallback: live Pinia only — see the general file for the full chain
+    try {
       var root  = document.getElementById("__nuxt");
       var app   = root && root.__vue_app__;
       var pinia = app && app.config && app.config.globalProperties && app.config.globalProperties.$pinia;
-      live = pinia && pinia.state && pinia.state.value;
-      absorb(live);
-    }catch(e){}
-
-    // 2) SSR hydration payload
-    if(!contactId || !email){
-      try{ payload = window.__NUXT__ && window.__NUXT__.pinia; absorb(payload); }catch(e){}
-    }
-
-    // 3) decode the portal JWT
-    if(!contactId){
-      try{
-        var t = tokenFrom(live) || tokenFrom(payload);
-        var seg = t && String(t).split(".")[1];
-        if(seg){
-          var j = JSON.parse(atob(seg.replace(/-/g,"+").replace(/_/g,"/")));
-          var m = j && j.clientPortalMeta;
-          if(m && m.contactId) contactId = m.contactId;
-          if(!userId && j && j.authClassId) userId = j.authClassId;
-        }
-      }catch(e){}
-    }
-
-    // 4) legacy keys
-    try{
-      var eR = localStorage.getItem("event");
-      if(eR && !contactId){ var ev = JSON.parse(eR); if(ev && ev.contactId) contactId = ev.contactId; }
-    }catch(e){}
-    try{
-      var cR = localStorage.getItem("common");
-      if(cR){
-        var c = JSON.parse(cR), u = c && c.clientPortalUserData;
-        if(u){
-          if(!contactId && u.contactId) contactId = u.contactId;
-          if(!email     && u.email)     email     = u.email;
-        }
-      }
-    }catch(e){}
-
-    if(!contactId) return null;
-    return { email: email, contactId: contactId, userId: userId };
+      var s     = pinia && pinia.state && pinia.state.value;
+      var p     = s && s["current-user"] && s["current-user"].profile;
+      var a     = s && s.auth;
+      var contactId = (p && p.contactId) || (a && a.contactId) || null;
+      if (contactId) return { email: (p && p.email) || null, contactId: contactId, userId: (p && p._id) || (a && a.userId) || null };
+    } catch(e){}
+    return null;
   }
 
   function isAboutPage(){ return location.pathname === ABOUT_PATH; }

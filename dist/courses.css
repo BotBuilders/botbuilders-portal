@@ -314,8 +314,12 @@ a.postqueue-lesson.post-highlight .custom-word-break {
   line-height: 1.6 !important;
   color: #475467 !important;
 }
-/* right column banner links (fills the reserved right space) */
-#bb-right-col {
+/* right column banner links (fills the reserved right space).
+   NAMED #bb-course-banners, not #bb-right-col: the general (portal-level) CSS
+   uses #bb-right-col for the dashboard's Bob column, and that file is NOT
+   scoped — its min-height:600px / overflow:hidden / border-radius:12px were
+   landing on this element too. Only invisible because of the hide block below. */
+#bb-course-banners {
   position: absolute;
   top: 0;
   right: 0;
@@ -326,7 +330,7 @@ a.postqueue-lesson.post-highlight .custom-word-break {
   gap: 16px;
   box-sizing: border-box;
 }
-#bb-right-col .bb-banner {
+#bb-course-banners .bb-banner {
   display: block;
   border-radius: 14px;
   overflow: hidden;
@@ -336,11 +340,11 @@ a.postqueue-lesson.post-highlight .custom-word-break {
     transform 0.12s ease,
     box-shadow 0.12s ease;
 }
-#bb-right-col .bb-banner:hover {
+#bb-course-banners .bb-banner:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(16, 24, 40, 0.16);
 }
-#bb-right-col .bb-banner img {
+#bb-course-banners .bb-banner img {
   display: block;
   width: 100%;
   height: auto;
@@ -430,7 +434,7 @@ a.postqueue-lesson.post-highlight .custom-word-break {
 
 /* ===== TEMPORARY: hide the two right-hand banner boxes =====
    Delete this block to bring them back. */
-#bb-right-col {
+#bb-course-banners {
   display: none !important;
 }
 /* reclaim the 380px the banners were reserving.

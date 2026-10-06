@@ -1,10 +1,452 @@
-/* PLACEHOLDER — the Portal → Custom CSS field was not available when this repo
-   was created (see README → "Source provenance").
+/* ═══════════════════════════════════════════════════════════════════════
+   BOTBUILDERS PORTAL — CUSTOM CSS
+   Replaces the whole Custom CSS field. Same behavior as before, with the
+   duplicate/overridden rules merged so each element is styled in one place.
+   ═══════════════════════════════════════════════════════════════════════ */
 
-   Replace this file's entire contents with the current contents of the
-   Portal → Custom CSS field (the nine numbered sections described in
-   CONTEXT.md §5), then run `npm run build`.
 
-   Until then dist/portal.css carries only the version stamp, and the
-   field-snippets/portal-css.css loader would import an empty stylesheet —
-   do NOT paste that loader into the live field yet. */
+/* ═══ 1. HIDDEN SECTIONS ═══════════════════════════════════════════════ */
+
+/* ---- Dashboard ---- */
+#dashboard-page-root #dashboard-stats-root {
+  display: none;
+}
+#dashboard-shared-files-section {
+  display: none;
+}
+#dashboard-pinned-communities-section {
+  display: none;
+}
+#dashboard-welcome-subtitle {
+  display: none;
+}
+
+/* ---- Sidebar nav ---- */
+#cp-portal-sidebar-nav-communities {
+  display: none !important;
+}
+/* Finances group (Invoices, Estimates, Contracts) */
+.app-sidebar-group:has(a[href="/invoices"]) {
+  display: none !important;
+}
+/* Group headers (Memberships, Finances, Business & Operations).
+   The sidebar rebuild moved these from div > p.hr-text to a direct h2. */
+.app-sidebar-group > h2.hr-text {
+  display: none !important;
+}
+/* Appointments — .selectable-list-item became li.app-sidebar-nav-item */
+.app-sidebar-nav-item:has(a[href="/appointments"]) {
+  display: none !important;
+}
+/* Dashboard — the logo already links there */
+.app-sidebar-group:has(a[href="/dashboard"]) {
+  display: none !important;
+}
+
+/* ---- Community page ---- */
+#communities-sidebar-group-switcher-trigger {
+  display: none !important;
+}
+.tabs-wrapper > a:not(#group-tabs-nav-settings) {
+  display: none !important;
+}
+
+/* ---- Topbar ---- */
+#search-widget-container {
+  display: none;
+}
+/* chat / announcements / notification icons, keep profile */
+.cp-topbar .right-section > div:last-child > *:not(:last-child) {
+  display: none !important;
+}
+
+/* ---- Account Settings rail: keep Profile + Account only ----
+   This page still uses the OLD .items-container / .selectable-list-item
+   markup — verified — so these selectors stay as they are. ---- */
+.selectable-list-item:has(> #account-settings-rail-item-meeting),
+.selectable-list-item:has(> #account-settings-rail-item-social-media),
+.selectable-list-item:has(> #account-settings-rail-item-certifications),
+.selectable-list-item:has(> #account-settings-rail-item-billing-subscriptions),
+.selectable-list-item:has(> #account-settings-rail-item-chats),
+.selectable-list-item:has(> #account-settings-rail-item-notifications) {
+  display: none !important;
+}
+
+
+/* ═══ 2. DASHBOARD LAYOUT ══════════════════════════════════════════════
+   Two rows, both 2/3 + 1/3:
+     top    — Pick up where you left off (2/3) | Bob        (1/3)
+     bottom — Assigned Courses           (2/3) | Need Help  (1/3)
+   `flex: 2 1 0` / `flex: 1 1 0` rather than percentages: with a 16px gap,
+   percentage bases overflow the row and get shrunk back unevenly. A zero
+   basis splits what's actually left after the gap, giving a true 2:1.
+   ════════════════════════════════════════════════════════════════════ */
+
+#custom-cw-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+#bb-top-row,
+#bb-bottom-row {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  align-items: stretch;
+}
+
+#bb-top-row > #continue-watching-section-root {
+  flex: 2 1 0;
+  min-width: 0;
+}
+#bb-top-row > #bb-right-col {
+  flex: 1 1 0;
+  min-width: 280px;        /* a third of a narrow desktop is under Bob's 240px floor */
+}
+
+/* `order` puts Need Help on the right while the JS still builds it first in
+   the DOM. Stacked on mobile that means courses first, help below. */
+#bb-bottom-row > #bb-help-col {
+  order: 2;
+  flex: 1 1 0;
+  min-width: 280px;
+  display: flex;           /* lets the card stretch to the row height */
+}
+#bb-bottom-row > #bb-priority-courses {
+  order: 1;
+  flex: 2 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+
+/* ═══ 3. BOB INLINE EMBED ══════════════════════════════════════════════
+   The host is absolutely positioned against this column. .bob-panel sizes
+   itself with height:100%, which only resolves against a parent with a
+   DEFINITE height — flex:1 or min-height alone are not definite and the
+   panel collapses to ~180px of content. inset:0 on a positioned parent is.
+   ════════════════════════════════════════════════════════════════════ */
+
+#bb-right-col {
+  position: relative;
+  min-height: 600px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+#bb-right-col > [data-bob-embed] {
+  position: absolute;
+  inset: 0;
+}
+
+
+/* ═══ 4. CONTINUE WATCHING ═════════════════════════════════════════════ */
+
+#continue-watching-section-root {
+  overflow: hidden;
+}
+#continue-watching-section-root .lg\:flex-row {
+  flex-direction: column !important;
+}
+#continue-watching-section-root .lg\:flex-row > * {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+#continue-watching-section-root img,
+#continue-watching-section-root video {
+  width: 100% !important;
+  height: auto !important;
+}
+
+
+/* ═══ 5. ASSIGNED COURSES ══════════════════════════════════════════════ */
+
+#bb-priority-courses {
+  width: 100%;             /* applies wherever the panel isn't in #bb-bottom-row */
+  padding: 16px;
+}
+#bb-priority-courses h2 {
+  margin: 0 0 8px;         /* the portal's default h2 carries a ~17px top margin */
+  line-height: 1.25;       /* and a 33.6px line-height on 21px text */
+}
+
+.bb-course-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-default, #e5e7eb);
+  border-radius: 10px;
+  margin-top: 12px;
+}
+.bb-course-text {
+  min-width: 0;            /* lets long titles/blurbs wrap instead of pushing the button */
+}
+/* The portal's own span renders at 14px/400 in a mid grey — near-identical to
+   the blurb, so the two read as one block. These separate them. */
+.bb-course-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #101828;
+  line-height: 1.35;
+}
+.bb-course-desc {
+  margin-top: 3px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #667085;
+}
+.bb-course-btn {
+  white-space: nowrap;
+  padding: 8px 16px;
+  border: 1px solid var(--border-default, #d1d5db);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.bb-course-btn:hover {
+  background: var(--sidebar-hover, #f3f4f6);
+}
+
+/* ---- My Courses grid: drop the small avatar left of each card title ----
+   Scoped to .my-course-card so the topbar profile avatar (same .hr-avatar
+   class) is untouched. */
+.my-course-card .hr-avatar {
+  display: none;
+}
+
+/* ---- Loading skeleton ---- */
+.bb-skeleton {
+  height: 64px;
+  border-radius: 10px;
+  margin-top: 12px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 37%, #f0f0f0 63%);
+  background-size: 400% 100%;
+  animation: bb-pulse 1.2s ease-in-out infinite;
+}
+@keyframes bb-pulse {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+
+/* ═══ 6. NEED HELP CARD ════════════════════════════════════════════════
+   Rendered by the JS only for contacts tagged "global - test tag" or
+   "inner circle - active"; otherwise #bb-help-col is display:none and the
+   courses panel fills the row on its own.
+   ════════════════════════════════════════════════════════════════════ */
+
+#bb-help-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+#bb-help-card h2 {
+  margin: 0 0 8px;
+  line-height: 1.25;
+}
+.bb-help-body {
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+/* ---- Stat tiles (only rendered when those custom fields have values) ---- */
+.bb-help-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.bb-help-stat {
+  flex: 1 1 0;
+  min-width: 0;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.bb-help-stat-label {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.bb-help-stat-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* rgb(0,78,235) is the portal's own primary — the same blue as the active
+   nav item — not the old portal's #2563eb. */
+.bb-help-btn {
+  margin-top: auto;        /* pins to the bottom so the card matches the courses height */
+  background: rgb(0, 78, 235);
+  color: #fff;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  transition: background 0.15s ease;
+}
+.bb-help-btn:hover {
+  background: rgb(0, 62, 188);
+}
+
+
+/* ═══ 6b. INJECTED NAV ITEMS — ACTIVE STATE ════════════════════════════
+   Calendar and Contact are plain <a>s, not Vue <router-link>s, so the portal
+   never marks them current. The JS toggles `bg-primary` on them by path, which
+   paints the background — but the portal's own colour rule on the link still
+   wins, leaving dark text and a dark icon on blue. Force the foreground here.
+   The icon inherits via currentColor, so the link alone is enough.
+   ════════════════════════════════════════════════════════════════════ */
+
+#custom-menu-calendar-link.bg-primary,
+#custom-menu-contact-link.bg-primary {
+  color: #fff !important;
+}
+
+
+/* ═══ 7. SIDEBAR LOGO AS THE ACTIVE "DASHBOARD" ITEM ═══════════════════
+   #dashboard-page-root exists only on the dashboard, so this is a live DOM
+   check rather than a stored route — it survives SPA navigation with no JS.
+   ════════════════════════════════════════════════════════════════════ */
+
+body:has(#dashboard-page-root) .cp-portal-sidebar-header > a {
+  background-color: rgb(0, 78, 235);
+  color: #fff;
+}
+body:has(#dashboard-page-root) .cp-portal-sidebar-header > a span {
+  color: #fff;
+}
+
+
+/* ═══ 8. LEFT MENU ALWAYS EXPANDED ═════════════════════════════════════
+   The portal drives the sidebar width from --cp-sidebar-width (16rem open /
+   3rem collapsed). On community and course pages it also adds
+   .sidebar-collapsed + .switcher-sidebar-mode to #cp-root-container.
+   Pinning the variable in every one of those states is what keeps it open.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Every rule here is scoped to html:not([data-bb-course]). The JS sets
+   data-bb-course on /courses/products/* so the portal's own icon rail survives
+   there — a course already has its own module menu, and two full menus side by
+   side is the confusing part. The toggle button comes back on those pages too,
+   so the menu can still be opened by hand. */
+html:not([data-bb-course]) .sidebar-toggle-btn {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  /* :not(.auth-page) matters — the login/signup screen reuses
+     #cp-root-container with NO sidebar child, so forcing a 16rem first column
+     squeezed the whole sign-in card into 256px with 1704px of empty blue
+     beside it. */
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page),
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page).sidebar-collapsed,
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page).switcher-sidebar-mode,
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page).sidebar-collapsed.switcher-sidebar-mode {
+    --cp-sidebar-width: 16rem !important;
+    grid-template-columns: 16rem 1fr !important;
+  }
+
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page) > .cp-sidebar {
+    width: 16rem !important;
+    min-width: 16rem !important;
+  }
+
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page) .cp-sidebar > aside {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* no width animation on route change, so it never flashes narrow */
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page),
+  html:not([data-bb-course]) #cp-root-container:not(.auth-page) .cp-sidebar > aside {
+    transition: none !important;
+  }
+}
+
+
+/* ═══ 9. SMALL SCREENS ═════════════════════════════════════════════════
+   MUST stay last. The 2:1 rules above have the same specificity as these,
+   so if this block sat higher in the file (as it did before), `flex: 2 1 0`
+   would win here and the stacked columns would size off a zero basis.
+   ════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  #bb-top-row,
+  #bb-bottom-row {
+    flex-direction: column;
+  }
+
+  #bb-top-row > #continue-watching-section-root,
+  #bb-top-row > #bb-right-col,
+  #bb-bottom-row > #bb-help-col,
+  #bb-bottom-row > #bb-priority-courses {
+    flex: 1 1 auto;        /* height from content once stacked */
+    min-width: 0;
+  }
+
+  #bb-right-col {
+    min-height: 480px;     /* Bob needs >= 240px; 480 keeps the message list usable */
+  }
+}
+
+
+/* ═══ 10. SITE-WIDE FOOTER ═════════════════════════════════════════════
+   Built by the footer block in the JS and appended to main.cp-main-content,
+   so it appears under the content on every route.
+   ════════════════════════════════════════════════════════════════════ */
+
+#bb-footer {
+  margin: 32px 24px 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-default, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #667085;
+}
+#bb-footer img {
+  height: 44px;            /* near-square mark (3324x3095), so this is ~44px wide too */
+  width: auto;
+  margin-bottom: 2px;
+}
+#bb-footer a {
+  color: #667085;
+  text-decoration: none;
+}
+#bb-footer a:hover {
+  color: #101828;
+  text-decoration: underline;
+}
+#bb-footer .bb-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#bb-footer .bb-footer-sep {
+  color: #d0d5dd;
+}
