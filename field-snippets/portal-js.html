@@ -1,0 +1,18 @@
+<script>
+/* INLINE ON PURPOSE — do not move this into the hosted bundle.
+   The Bob widget scans for its [data-bob-embed] host exactly once, at init,
+   and never reconsiders. An external script is fetched over the network and
+   loses that race, so Bob would silently fall back to a floating panel.
+   Parking the host here costs 8 lines and removes the race entirely.
+   portal.js adopts an existing host rather than creating a second one. */
+(function () {
+  var p = location.pathname;
+  if (!(p.replace(/\/+$/, '') === '/dashboard' || /^\/courses\/products\//.test(p))) return;
+  if (document.querySelector('[data-bob-embed], #bob-embed')) return;
+  var d = document.createElement('div');
+  d.setAttribute('data-bob-embed', '');
+  d.style.cssText = 'position:absolute;left:-10000px;top:0;width:400px;height:600px;';
+  (document.body || document.documentElement).appendChild(d);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.0/dist/portal.js"></script>

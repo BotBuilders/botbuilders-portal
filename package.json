@@ -1,0 +1,22 @@
+{
+  "name": "botbuilders-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BotBuilders client-portal (ClientClub) Custom JS/CSS, versioned and served from jsDelivr",
+  "type": "module",
+  "config": {
+    "cdnRepo": "BotBuilders/botbuilders-portal"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs",
+    "preversion": "node scripts/build.mjs && node scripts/check.mjs",
+    "version": "node scripts/build.mjs && node scripts/check.mjs && git add -A",
+    "release": "npm version patch -m \"release v%s\" && git push --follow-tags",
+    "release:minor": "npm version minor -m \"release v%s\" && git push --follow-tags",
+    "release:major": "npm version major -m \"release v%s\" && git push --follow-tags"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

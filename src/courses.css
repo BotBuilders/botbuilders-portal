@@ -1,0 +1,486 @@
+/* Instructor card */
+#instructor-card {
+  display: none;
+}
+:root {
+  --bb-bg: #f5f6f8;
+  --bb-blue: #2f6fed;
+  --bb-ink: #101828;
+  --bb-mut: #667085;
+  --bb-line: #e4e7ec;
+}
+/* Base / background */
+.lessonRoot,
+.lesson-container,
+.neue-template {
+  background: var(--bb-bg) !important;
+}
+/* Full-width layout */
+#post-details-container.neue-template {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+#post-details-container .mx-auto.max-w-6xl {
+  max-width: none !important;
+}
+.lesson-container .flex-1 > .mx-auto {
+  max-width: none !important;
+  padding: 0 !important;
+}
+/* hide original breadcrumb (replaced by top bar) */
+.breadCrumb__nav {
+  display: none !important;
+}
+/* hide Course Content / Live sessions tab row */
+.w-full.max-w-\[1312px\].mx-auto.mt-6 > .flex.gap-2.items-center.border-b {
+  display: none !important;
+}
+.w-full.max-w-\[1312px\].mx-auto.mt-6 {
+  margin-top: 0 !important;
+  max-width: none !important;
+}
+/* ===== TOP COURSE HEADER BAR ===== */
+#bb-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  background: #fff;
+  border-bottom: 1px solid #eaeaea;
+  padding: 14px 28px;
+  width: 100%;
+}
+#bb-topbar .bb-course-left .eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #98a2b3;
+  margin-bottom: 2px;
+}
+#bb-topbar .bb-course-left .cname {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--bb-ink);
+  letter-spacing: -0.01em;
+}
+/* progress: REUSES the existing native bar (.lesson-progress__color) — no duplicate */
+#bb-topbar .bb-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1 1 auto;
+}
+#bb-topbar .bb-native-track {
+  flex: 1 1 auto;
+  margin: 0 !important;
+  height: 8px !important;
+  background: #e7e8ec !important;
+  border-radius: 999px !important;
+  overflow: hidden;
+}
+#bb-topbar .bb-native-track .lesson-progress__color {
+  height: 8px !important;
+  background: var(--bb-blue) !important;
+  border-radius: 999px !important;
+}
+#bb-topbar .bb-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bb-ink);
+  white-space: nowrap;
+}
+#bb-topbar .bb-count {
+  font-size: 14px;
+  color: var(--bb-mut);
+  white-space: nowrap;
+}
+#bb-topbar .bb-dot {
+  color: #d0d5dd;
+}
+/* ===== SIDEBAR (far-left, full height) ===== */
+#category-list.side-panel {
+  background: #fff !important;
+  border: none !important;
+  border-right: 1px solid var(--bb-line) !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding-top: 8px !important;
+  padding-right: 4px !important;
+}
+.neue-template > .grid.grid-cols-12 {
+  gap: 0 !important;
+  margin: 0 !important;
+  position: relative !important;
+  padding-right: 380px !important;
+}
+.main-section {
+  padding: 28px 32px 40px 32px !important;
+}
+/* sidebar section headers */
+.category-title.postqueue-category {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--bb-ink) !important;
+  padding: 14px 18px !important;
+  border-radius: 8px !important;
+  margin: 2px 8px !important;
+  text-transform: none !important;
+}
+.category-title.postqueue-category:hover {
+  background: #f2f4f7 !important;
+  color: var(--bb-ink) !important;
+}
+#category-list .postqueue-category .custom-word-break,
+.category-title.postqueue-category .custom-word-break {
+  color: var(--bb-ink) !important;
+  font-weight: 700 !important;
+}
+.category-title.postqueue-category .pr-3 {
+  color: #98a2b3 !important;
+}
+/* sidebar lesson rows */
+a.postqueue-lesson {
+  font-size: 14px !important;
+  color: #475467 !important;
+  padding: 11px 14px 11px 20px !important;
+  margin: 1px 8px !important;
+  border-radius: 8px !important;
+  border: none !important;
+}
+a.postqueue-lesson:hover {
+  background: #f2f4f7 !important;
+}
+a.postqueue-lesson .custom-word-break {
+  color: #475467 !important;
+}
+a.postqueue-lesson.post-highlight {
+  background: #eaf0ff !important;
+}
+a.postqueue-lesson.post-highlight .custom-word-break {
+  color: var(--bb-blue) !important;
+  font-weight: 600 !important;
+}
+/* ===== LESSON HEADER ROW ===== */
+#bb-lesson-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 0 0 4px 0;
+}
+#bb-lesson-head .bb-title-block {
+  min-width: 0;
+}
+#bb-lesson-head .bb-eyebrow {
+  font-size: 11px !important;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #98a2b3;
+  margin-bottom: 5px !important;
+}
+#bb-lesson-head .bb-title {
+  font-size: 26px !important;
+  line-height: 1.15 !important;
+  font-weight: 800;
+  color: var(--bb-ink);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+/* ===== MARK AS COMPLETE + NEXT LESSON row ===== */
+#bb-mark-slot {
+  margin: 10px 0 18px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+#bb-mark-slot #post-completion-btn,
+#bb-mark-slot .lesson-body__btn {
+  background: #fff !important;
+  color: #344054 !important;
+  border: 1.5px solid #d0d5dd !important;
+  border-radius: 999px !important;
+  padding: 7px 14px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  width: auto !important;
+  display: inline-flex !important;
+  gap: 6px !important;
+}
+#bb-mark-slot #post-completion-btn svg,
+#bb-mark-slot .lesson-body__btn svg {
+  color: #344054 !important;
+  width: 15px !important;
+  height: 15px !important;
+}
+/* Completed state: green accent so it reads as "done" */
+#bb-mark-slot #post-completion-btn.text-green-700 {
+  color: #027a48 !important;
+  border-color: #a6f4c5 !important;
+  background: #ecfdf3 !important;
+}
+#bb-mark-slot #post-completion-btn.text-green-700 svg {
+  color: #027a48 !important;
+}
+/* Next Lesson keeps its blue-pill design after moving beside Mark As Complete */
+#bb-mark-slot button.border-nova-blue-800 {
+  background: var(--bb-blue) !important;
+  border: none !important;
+  border-radius: 999px !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08) !important;
+}
+#bb-mark-slot button.border-nova-blue-800 span {
+  color: #fff !important;
+  font-size: 14px !important;
+  padding: 0 !important;
+}
+/* hide original next-lesson row (moved into mark slot) */
+.post-details .mt-5.flex.justify-between.items-center {
+  display: none !important;
+}
+/* ===== WHITE CONTENT CARD (video + text + attached files) ===== */
+#bb-content-card {
+  background: #fff !important;
+  border: 1px solid var(--bb-line) !important;
+  border-radius: 16px !important;
+  padding: 18px !important;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 1px 3px rgba(16, 24, 40, 0.06) !important;
+  /* the card is the ONLY scroller in the lesson column (see layout block) */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #d0d5dd transparent;
+}
+#bb-content-card::-webkit-scrollbar {
+  width: 8px;
+}
+#bb-content-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+#bb-content-card::-webkit-scrollbar-thumb {
+  background: #d0d5dd;
+  border-radius: 999px;
+  border: 2px solid #fff;
+}
+#bb-content-card::-webkit-scrollbar-thumb:hover {
+  background: #b8bec9;
+}
+#bb-content-card .post-body {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 8px 2px 0 2px !important;
+  margin: 6px 0 0 0 !important;
+}
+#bb-content-card .mt-4 {
+  margin-top: 14px !important;
+  border-top: 1px solid #eaecf0;
+  padding-top: 8px;
+}
+#bb-content-card .mt-4 .lesson-instructor-card,
+#bb-content-card .mt-4 > div {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 6px 2px !important;
+  margin: 0 !important;
+}
+#bb-content-card .mt-4 h4 {
+  text-align: left !important;
+  padding-left: 0 !important;
+}
+/* video frame */
+.lesson-body-description video,
+.lesson-body-description iframe {
+  border-radius: 14px !important;
+  border: 1px solid #e4e7ec !important;
+  background: #eef1f6 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+.lesson-body-description {
+  font-size: 15.5px !important;
+  line-height: 1.6 !important;
+  color: #475467 !important;
+}
+/* right column banner links (fills the reserved right space) */
+#bb-right-col {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 360px;
+  padding: 24px 24px 40px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+#bb-right-col .bb-banner {
+  display: block;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.1);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+#bb-right-col .bb-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.16);
+}
+#bb-right-col .bb-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+#brandLogo {
+  display: none;
+}
+/* Lesson sidebar fixes — stray h-scrollbar */
+#category-list.side-panel {
+  overflow-x: hidden !important;
+}
+#category-list .category-title {
+  width: auto !important;
+}
+
+/* ===== FULL-HEIGHT LAYOUT: sidebar always reaches the bottom of the screen =====
+   The lesson area is sized to exactly one screen (minus the portal header,
+   measured by JS into --bb-shell-top). The sidebar fills it and scrolls
+   inside itself; the lesson column does the same. */
+@media (min-width: 768px) {
+  #post-details-container.neue-template {
+    height: calc(100vh - var(--bb-shell-top, 56px)) !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  #bb-topbar {
+    flex: 0 0 auto;
+  }
+  .neue-template > .grid.grid-cols-12.w-full {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    /* 3 columns: menu (30% narrower than before) | lesson | Bob chat bot */
+    grid-template-columns: clamp(210px, 19%, 336px) minmax(0, 1fr) clamp(320px, 26%, 420px) !important;
+  }
+  .neue-template > .grid.grid-cols-12 > #category-list.side-panel {
+    grid-column: 1 !important;
+  }
+  .neue-template > .grid.grid-cols-12 > .main-section {
+    grid-column: 2 !important;
+  }
+  /* empty placeholder that reserves the right column; JS pins the bot over it */
+  .neue-template > .grid.grid-cols-12 > #bb-bot-slot {
+    grid-column: 3 !important;
+    display: block !important;
+  }
+}
+
+/* ===== BOB CHAT BOT =====
+   The bot itself (#bb-bot-host) lives outside the lesson area so it survives
+   lesson changes; it's styled inline by the JS because the portal's CSS
+   scoping can't reach it. #bb-bot-slot just reserves its column. */
+#bb-bot-slot {
+  display: none;
+}
+@media (min-width: 768px) {
+  .neue-template > .grid.grid-cols-12 > #category-list.side-panel {
+    position: relative !important;
+    top: auto !important;
+    align-self: stretch !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+  }
+  /* lesson column doesn't scroll itself — title + buttons stay put,
+     the white content card fills the rest and scrolls inside */
+  .neue-template > .grid.grid-cols-12 > .main-section {
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .main-section > #bb-lesson-head,
+  .main-section > #bb-mark-slot {
+    flex: 0 0 auto !important;
+  }
+  .main-section > #bb-content-card {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+}
+
+/* ===== TEMPORARY: hide the two right-hand banner boxes =====
+   Delete this block to bring them back. */
+#bb-right-col {
+  display: none !important;
+}
+/* reclaim the 380px the banners were reserving.
+   The .w-full on the end is load-bearing: the earlier rule sets
+   padding-right:380px !important with the same specificity, so
+   without the extra class this loses on document order. */
+.neue-template > .grid.grid-cols-12.w-full {
+  padding-right: 0 !important;
+}
+
+/* ===== ATTACHED FILES spacing (only applies to lessons that have attachments) ===== */
+/* breathing room between the lesson text and the Attached Files box */
+.post-details .attached-files {
+  margin-top: 20px !important;
+}
+/* tighten the gap between the "Attached Files" heading and the file row */
+.post-details .attached-files > h4 {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+.post-details .attached-files > h4 + div > div:first-child {
+  padding-top: 8px !important;
+}
+
+/* ===== LOADING STATE =====
+   While the portal shows its grey skeleton (before our JS has built the
+   course header), hide it and show one clean spinner instead.
+   Failsafe: content fades back in after 10s even if the JS never runs. */
+#post-details-container:not(:has(#bb-topbar)) {
+  position: relative !important;
+}
+#post-details-container:not(:has(#bb-topbar)) > * {
+  opacity: 0; /* no !important, or the 10s failsafe animation can't override it */
+  animation: bbReveal 0s linear 10s forwards;
+}
+#post-details-container:not(:has(#bb-topbar))::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid #dbe4ff;
+  border-top-color: var(--bb-blue);
+  border-radius: 50%;
+  animation: bbSpin 0.8s linear infinite;
+  z-index: 1;
+}
+@keyframes bbSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes bbReveal {
+  to { opacity: 1; }
+}

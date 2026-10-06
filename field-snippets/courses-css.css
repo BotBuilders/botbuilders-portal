@@ -1,0 +1,6 @@
+@import url("https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.0/dist/courses.css");
+
+/* INLINE ON PURPOSE — anti-flash. See the LOADING STATE block in src/courses.css. */
+#post-details-container:not(:has(#bb-topbar)) { position: relative !important; }
+#post-details-container:not(:has(#bb-topbar)) > * { opacity: 0; animation: bbReveal 0s linear 10s forwards; }
+@keyframes bbReveal { to { opacity: 1; } }

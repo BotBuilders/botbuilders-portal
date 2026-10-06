@@ -1,0 +1,163 @@
+/* ============================================================
+   Botbuilders client portal — group custom CSS
+   ============================================================
+
+   This box applies to EVERY page in the group, so anything meant
+   for a single page carries a route guard:
+
+       body:has(#group-tabs-nav-about.router-link-exact-active)
+
+   Vue puts .router-link-exact-active on whichever group tab matches
+   the current route, so that matches on /about and nowhere else.
+   It keeps working even though the tabs themselves are hidden —
+   :has() is structural and ignores display:none.
+
+   REMOVED (dead since the portal migrated to Nuxt): the three rules
+   targeting #app, .n-config-provider and .info-sidebar-scrollbar.
+   Those are Naive UI selectors; all three match zero elements now.
+   ============================================================ */
+
+
+/* ============================================================
+   1. ALL PAGES
+   ============================================================ */
+
+/* Community group switcher */
+#communities-sidebar-group-switcher-trigger {
+  display: none !important;
+}
+
+/* Group tabs — show only Settings */
+.tabs-wrapper > a:not(#group-tabs-nav-settings) {
+  display: none !important;
+}
+
+/* Top search bar */
+#search-widget-container {
+  display: none !important;
+}
+
+
+/* ============================================================
+   2. ABOUT PAGE ONLY
+   ============================================================ */
+
+/* 2a. The "Support" about-section card.
+       Guarded — the class chain is generic enough that it could match
+       a card on another page as the portal evolves. */
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  main.main-content div.w-full > div.w-full.bg-background.p-4.rounded-lg.border.border-default.border-solid.shadow-sm {
+  display: none !important;
+}
+
+/* 2b. Blank left column.
+       Hiding the column alone is not enough: .communities-layout is a
+       grid with a fixed "280px 1fr" track list, so the empty track keeps
+       the gap. Let .col-main span both tracks instead. */
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  .col-sidebar:has(#communities-sidebar-main) {
+  display: none !important;
+}
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  .communities-layout:has(#communities-sidebar-main) > .col-main {
+  grid-column: 1 / -1 !important;
+}
+
+/* 2c. Settings tab bar — removes the empty 52px strip the hidden tabs
+       would otherwise leave behind. */
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  .community-topbar-themed:has(#group-tabs-desktop-container) {
+  display: none !important;
+}
+
+/* 2d. Group info card (banner, description, Invite Members, counts).
+       .content-area is flex-row, so dropping .col-info collapses it and
+       the scroll column reclaims the width. */
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  .content-area > .col-info {
+  display: none !important;
+}
+
+/* 2e. Re-centre the form.
+       .main-scroll-content is capped at max-width:720px with zero
+       margins, so once 2d frees the info column it sits flush left
+       inside the now-1040px scroll area, leaving 320px dead on the
+       right. Auto margins split that evenly. Must target
+       .main-scroll-content, NOT main.main-content — main already fills
+       its parent, so auto margins there resolve to 0. */
+body:has(#group-tabs-nav-about.router-link-exact-active)
+  #communities-main-scroll > .main-scroll-content {
+  margin-inline: auto !important;
+}
+
+
+/* ============================================================
+   3. EVENTS PAGE
+   ============================================================
+   No route guard needed — .events-sidebar-panel and
+   #events-header-recordings-button exist only on this page. */
+
+/* 3a. Small month calendar above the events list */
+.events-sidebar-panel .calendar-wrapper {
+  display: none !important;
+}
+
+/* reclaim the freed vertical space for the events list */
+.events-sidebar-panel .space-y-3.mt-4 {
+  height: calc(100vh - 19rem) !important;
+}
+
+/* 3b. Replace the "Upcoming | Past" toggle with a plain heading.
+       Drawn on the toggle's wrapper rather than by restyling the
+       Upcoming button — that button carries its own chrome (and a
+       nested label) that is not worth fighting. */
+.events-sidebar-panel div:has(> .hr-button-group) > .hr-button-group {
+  display: none !important;
+}
+.events-sidebar-panel div:has(> .hr-button-group)::before {
+  content: "Upcoming Events";
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.75rem;
+  color: rgb(16, 24, 40);
+}
+
+/* 3c. Recordings button */
+#events-header-recordings-button {
+  display: none !important;
+}
+
+/* 3d. Swap the colours. The portal ships these backwards: the date is
+       blue but inert (cursor: auto), while the event title is near-black
+       but is the clickable element (cursor: pointer). */
+.events-sidebar-panel .space-y-1 > p.text-primary {
+  color: rgb(16, 24, 40) !important;   /* date -> black */
+}
+.events-sidebar-panel .space-y-1 p.text-on-sidebar {
+  color: rgb(0, 78, 235) !important;   /* event title -> blue */
+}
+
+
+/* ============================================================
+   4. EVENT DETAIL POPOVER                              [NEW]
+   ============================================================
+   Opens from a calendar entry or the Upcoming Events sidebar.
+   The ids below exist only inside this popover, so no route
+   guard is needed. */
+
+/* 4a. "Entry Fee / Free" row.
+       Targets the row wrapper, not the label — hiding just the <p>
+       would leave the icon and the "Free" value behind. The
+       :has(> div > #id) shape pins it to the row whose grandchild
+       is the label, so the generic .flex.flex-row.gap-2 class combo
+       cannot match anything else in the popover. */
+div:has(> div > #event-entry-fee-label) {
+  display: none !important;
+}
+
+/* 4b. Share button. The sibling "Add to Calendar" button is left
+       alone, as is the "File Share" item in the main nav — both
+       contain the word "Share", which is why this targets the id. */
+#event-share-button {
+  display: none !important;
+}
