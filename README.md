@@ -41,7 +41,7 @@ caching, instant feedback — then cut a tag once the change settles.
 |---|---|---|
 | Portal → Custom JS | `field-snippets/portal-js.html` | inline Bob host stub + `dist/portal.js` |
 | Portal → Custom CSS | `field-snippets/portal-css.css` | `dist/portal.css` |
-| Course → Custom JS | `field-snippets/courses-js.html` | `dist/courses.js` |
+| Course → Custom JS | `field-snippets/courses-js.js` (raw JS loader — this field takes JS, not HTML) | `dist/courses.js` |
 | Course → Custom CSS | `field-snippets/courses-css.css` | `dist/courses.css` + inline anti-flash block |
 | Community → Custom JS | `field-snippets/communities-js.html` | `dist/communities.js` |
 | Community → Custom CSS | `field-snippets/communities-css.css` | `dist/communities.css` |

@@ -3,6 +3,15 @@ try {(() => {
 
   const TOTAL_SEGMENTS = 10;
 
+  // Lesson pages only. The portal injects this field's script the first time a
+  // lesson opens, and it then stays alive for the rest of the SPA session — so
+  // every function below also runs on the dashboard unless it is gated here.
+  // Without the gate, buildBotCol() pulled the shared Bob element into
+  // #bb-bot-host (which is hidden off lesson pages) on every DOM change and
+  // fought the portal script for it: Bob vanished from the dashboard after
+  // visiting any lesson.
+  const onLesson = () => /^\/courses\/products\//.test(location.pathname);
+
   function computeProgress(){
     const lessons=[...document.querySelectorAll('a.postqueue-lesson')];
     const total=lessons.length||0;
@@ -166,6 +175,8 @@ try {(() => {
      once, at init, and never reconsiders.
      This file no longer injects widget.js and no longer creates its own box —
      it borrows the shared one and only decides where it sits on a lesson page.
+     Off lesson pages it must not touch the element at all (see onLesson), or
+     it takes the dashboard's Bob with it.
      That also retires the old 5-try remount loop, which existed purely because
      two fields were competing to own the same widget. */
   function sharedEmbed(){
@@ -188,7 +199,7 @@ try {(() => {
         +'border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04),0 1px 3px rgba(16,24,40,.06);';
       document.body.appendChild(host);
     }
-    const emb=sharedEmbed();
+    const emb=onLesson() ? sharedEmbed() : null;
     if(emb && emb.parentElement!==host){
       emb.removeAttribute('style');      // drop the parked off-screen positioning
       emb.style.height='100%';
@@ -215,7 +226,11 @@ try {(() => {
   }
 
   function run(){
-    try{ setFullWidth(); setShellTop(); buildTopBar(); buildLessonHead(); buildContentCard(); buildRightCol(); buildBotCol(); }catch(e){ /* no-op */ }
+    try{
+      setFullWidth();                           // also undoes the full-width styles after leaving a lesson
+      if(!onLesson()){ placeBot(); return; }    // placeBot() hides #bb-bot-host off lesson pages
+      setShellTop(); buildTopBar(); buildLessonHead(); buildContentCard(); buildRightCol(); buildBotCol();
+    }catch(e){ /* no-op */ }
   }
 
   window.addEventListener('resize', () => { setShellTop(); placeBot(); });
@@ -231,6 +246,12 @@ try {(() => {
   }
   const obs = new MutationObserver(() => {
     const key = currentKey();
+    if(!onLesson()){
+      // Off lesson pages: nothing per mutation. Tidy up once when the route
+      // changes (run() only touches styles here, so this cannot loop).
+      if(key !== lastKey){ lastKey = key; run(); }
+      return;
+    }
     const needsBuild = key !== lastKey
       || !document.getElementById('bb-topbar')
       || !document.getElementById('bb-content-card')

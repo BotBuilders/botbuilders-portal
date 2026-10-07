@@ -108,7 +108,9 @@ const snippets = {
   'portal-css.css': `@import url("${CDN}/portal.css");
 `,
 
-  'courses-js.html': `<script src="${CDN}/courses.js"></script>
+  // The Course Custom JS field takes raw JavaScript, not HTML, so a <script>
+  // tag there is a syntax error. Load the bundle from JS instead.
+  'courses-js.js': `(function(){var s=document.createElement('script');s.src='${CDN}/courses.js';document.head.appendChild(s);})();
 `,
 
   'courses-css.css': `@import url("${CDN}/courses.css");
