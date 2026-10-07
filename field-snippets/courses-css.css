@@ -1,4 +1,4 @@
-@import url("https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.1/dist/courses.css");
+@import url("https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.2/dist/courses.css");
 
 /* INLINE ON PURPOSE — anti-flash. See the LOADING STATE block in src/courses.css. */
 #post-details-container:not(:has(#bb-topbar)) { position: relative !important; }
