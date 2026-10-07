@@ -815,18 +815,17 @@
   /* ────────── Footer ──────────
      Appended to main.cp-main-content — the scroll container that wraps every
      page's content — and rebuilt if a route change drops it.
-     Shown on the four routes in FOOTER_PATHS only; removed elsewhere, since
+     Shown on the three routes in FOOTER_PATHS only; removed elsewhere, since
      the same <main> is reused across routes and the footer would otherwise
      follow you around after a soft navigation. */
   (() => {
     if (window.__bbFooter) return;
     window.__bbFooter = true;
 
-    // Dashboard, Contact, File Share, Affiliates. Prefix matches, so
+    // Dashboard, File Share, Affiliates. Prefix matches, so
     // sub-routes (e.g. /affiliates/campaign) count too.
     const FOOTER_PATHS = [
       /^\/dashboard\/?$/,
-      /^\/communities\/groups\/support\/about/,
       /^\/shared-files/,
       /^\/affiliates/,
     ];

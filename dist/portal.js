@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.1 · 2026-10-07';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.1 · 2026-10-07' });
+window.BB_VERSION = '1.0.1 · 2026-10-08';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.1 · 2026-10-08' });
 /* botbuilders-portal · portal.js · built from src/portal.js (5 script blocks) */
 
 /* ── block 1 ── */
@@ -815,18 +815,17 @@ window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.1 · 202
   /* ────────── Footer ──────────
      Appended to main.cp-main-content — the scroll container that wraps every
      page's content — and rebuilt if a route change drops it.
-     Shown on the four routes in FOOTER_PATHS only; removed elsewhere, since
+     Shown on the three routes in FOOTER_PATHS only; removed elsewhere, since
      the same <main> is reused across routes and the footer would otherwise
      follow you around after a soft navigation. */
   (() => {
     if (window.__bbFooter) return;
     window.__bbFooter = true;
 
-    // Dashboard, Contact, File Share, Affiliates. Prefix matches, so
+    // Dashboard, File Share, Affiliates. Prefix matches, so
     // sub-routes (e.g. /affiliates/campaign) count too.
     const FOOTER_PATHS = [
       /^\/dashboard\/?$/,
-      /^\/communities\/groups\/support\/about/,
       /^\/shared-files/,
       /^\/affiliates/,
     ];
