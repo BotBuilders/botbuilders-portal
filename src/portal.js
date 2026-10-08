@@ -10,7 +10,9 @@
     const ACTIVE_LINK_CLASSES = ["router-link-active", "router-link-exact-active", "bg-primary", "text-on-primary", "active", "cp-portal-nav-item__link--active"];
     /* ────────── helpers ────────── */
     function safeJsonParse(raw){ try { return JSON.parse(raw); } catch { return null; } }
-    function normalizeText(s){ return (s||"").toString().trim().replace(/^["“”']+|["“”']+$/g,"").replace(/\s+/g," ").trim().toLowerCase(); }
+    // Periods are dropped so "A.I. Powered Profits" and "AI Powered Profits" are the
+    // same key — the course list and the contact field spell these differently.
+    function normalizeText(s){ return (s||"").toString().trim().replace(/^["“”']+|["“”']+$/g,"").replace(/\./g,"").replace(/\s+/g," ").trim().toLowerCase(); }
     /* rAF does NOT fire while the tab is hidden. The old version set the
        "scheduled" flag, handed the reset to rAF, and if that callback was never
        delivered (page loaded in a background tab) the flag latched true and
@@ -290,8 +292,15 @@
     // Claim the host now, before widget.js gets a chance to initialise.
     if (needsBob()) ensureBobHost();
     const COURSE_MAP = [
-      ["Core Bot System","97f2e80d-0593-4fd9-96f0-3514f4a62dba"],
-      ["AI Powered Profits","14e8e519-e4df-4c3e-8e18-b05afa17fe8a"],
+      ["AI Safety & Success","4661547b-6181-42d7-a7fe-d05d6dcdff92"],
+      ["Ultimate Webinar Sales System","98a7f792-4fd0-499d-972c-4737bf22f2b2"],
+      ["AI Sales Engines","5db31f26-223a-4593-89dd-bf3ae8b08647"],
+      ["AI CMO","1ac00804-956e-4cbb-a83c-651821e97582"],
+      ["AI Insiders","c4ef7e06-c9d3-4645-b7ab-ff5ecaa889c6"],
+      ["Magic Cards","1a18c477-6a49-4a96-bf03-77f7c888cece"],
+      ["Connect Event Recording","0de6624c-788d-40f6-ba43-f789f32cd558"],
+      ["Inner Circle Program","63ba1de7-856f-43b4-ab6d-dbaddd48df43"],
+      ["Building Your Bot & AI Business","6a359b4e-8c3a-4115-a19a-05572a88a56d"],
       ["Launchpad Mentoring Calls","c25c8e61-7fac-4770-bfe8-5f9df783d03e"],
       ["Preparing for Liftoff","c1340408-4844-40f1-8c04-0a06b314601f"],
       ["BLAST Scaling System","8782a449-b0c9-4678-b3cd-e9156feb3745"],
@@ -310,6 +319,7 @@
       ["Writing to Convert","abec7bfe-8958-4160-b09a-0227cff5c3d0"],
       ["BotBuilder Bonus","2dfbea86-db51-4614-92a5-1b0024346bf6"],
       ["BotBuilders Quick Tips","eeb7cd42-2d94-4238-ae10-78e73e85e20d"],
+      ["Core Bot System","97f2e80d-0593-4fd9-96f0-3514f4a62dba"],
       ["Accelerator Mentoring","3e712922-b319-4a2c-a974-a4786a9d7b47"],
       ["10X Marketing Systems","50564122-0f82-4391-9d40-26d8e77394df"],
       ["Webinar Automator Academy","baca11fd-54bc-4f7c-90eb-7e9028cd97ba"],
@@ -323,7 +333,7 @@
       ["A.I. Marketing Helper","dbba6cb2-604a-4d0a-96e9-2dd1cf5d45b1"],
       ["Building Your Brand","b8ee6a77-cad8-4a88-87bb-4c7dc18b0001"],
       ["A.I. Specialist Certification","7005bc18-a760-481e-b561-e5e849a3c3cd"],
-      ["Abundance Membership","7d766357-f1ab-4c7f-9a15-e0d086fd1404"],
+      ["AI Powered Profits","14e8e519-e4df-4c3e-8e18-b05afa17fe8a"],
     ].map(([name,id]) => ({ name, link: COURSE_BASE_URL + id }));
     const byName = new Map(COURSE_MAP.map(c => [normalizeText(c.name), c]));
     /* One-line blurb under each course title. Keyed by the NORMALIZED name from

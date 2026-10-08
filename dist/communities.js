@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.3 · 2026-10-08';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.3 · 2026-10-08' });
+window.BB_VERSION = '1.0.3 · 2026-10-09';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.3 · 2026-10-09' });
 /* botbuilders-portal · communities.js · built from src/communities.js (3 script blocks) */
 
 /* ── block 1 ── */
