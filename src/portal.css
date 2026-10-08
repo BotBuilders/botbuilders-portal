@@ -135,6 +135,19 @@
   border-radius: 12px;
   overflow: hidden;
 }
+/* Short windows: the column stretches to the "Pick up where you left off"
+   card, which can be taller than the screen, pushing Bob's input row below
+   the fold. Cap the column to the visible part of the scroll area (56px
+   topbar + 24px padding top and bottom) and make it sticky so it stays in
+   view while the card scrolls. min() keeps the 600px floor from beating the
+   cap — min-height wins over max-height, so the floor has to shrink too.
+   Bob needs >= 240px; the cap only drops that low on a ~344px-tall window. */
+#bb-top-row > #bb-right-col {
+  position: sticky;
+  top: 24px;
+  min-height: min(600px, calc(100vh - 104px));
+  max-height: calc(100vh - 104px);
+}
 #bb-right-col > [data-bob-embed] {
   position: absolute;
   inset: 0;
@@ -405,8 +418,11 @@ html:not([data-bb-course]) .sidebar-toggle-btn {
     min-width: 0;
   }
 
-  #bb-right-col {
-    min-height: 480px;     /* Bob needs >= 240px; 480 keeps the message list usable */
+  #bb-right-col,
+  #bb-top-row > #bb-right-col {
+    position: relative; /* stacked layout: no sticky, no viewport cap */
+    max-height: none;
+    min-height: 480px; /* Bob needs >= 240px; 480 keeps the message list usable */
   }
 }
 

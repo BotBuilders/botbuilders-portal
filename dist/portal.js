@@ -504,6 +504,11 @@ window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.5 · 202
         right.textContent = "";
         host.removeAttribute("style");   // un-park it; the stylesheet owns the size from here
         right.appendChild(host);
+      } else if (host.getAttribute("style")){
+        // The widget stamps height:560px on a host it finds shorter than
+        // 240px. Here the stylesheet owns the size (inset:0), and a stray
+        // inline height would clip the input row — strip it every tick.
+        host.removeAttribute("style");
       }
       if (right.parentElement !== topRow) topRow.appendChild(right);
       // Assigned Courses panel: full-width, BELOW the top row
