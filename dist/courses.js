@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.3 · 2026-10-09';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.3 · 2026-10-09' });
+window.BB_VERSION = '1.0.4 · 2026-10-09';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.4 · 2026-10-09' });
 /* botbuilders-portal · courses.js · built from src/courses.js (1 script block) */
 
 /* ── block 1 ── */
