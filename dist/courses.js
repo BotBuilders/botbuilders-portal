@@ -226,7 +226,14 @@ try {(() => {
     // 60% of the screen height; only shrinks if that would run off the bottom
     const top=r.top+PAD_TOP, BOTTOM_GAP=24;
     const h=Math.min(window.innerHeight*BOT_HEIGHT, window.innerHeight-top-BOTTOM_GAP);
-    host.style.height=Math.max(200, Math.round(h))+'px';
+    host.style.height=Math.max(240, Math.round(h))+'px';   // 240 = the widget's INLINE_MIN_HOST_PX
+    // The widget stamps height:560px on an embed it finds shorter than 240px,
+    // and this box is display:none for a moment while the lesson layout loads.
+    // If its poll lands in that window the panel is pinned at 560px inside a
+    // shorter box and the input row is clipped off the bottom (seen on short
+    // screens). Re-assert 100% every tick so the panel always matches the box.
+    const emb=host.querySelector('[data-bob-embed]');
+    if(emb && emb.style.height!=='100%') emb.style.height='100%';
   }
 
   function run(){
