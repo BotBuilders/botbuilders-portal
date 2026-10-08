@@ -914,3 +914,51 @@
     window.addEventListener('popstate', schedule);
   })();
 </script>
+
+<script>
+  /* ────────── Course code loader ──────────
+     Loads dist/courses.css + dist/courses.js on lesson pages, so the
+     per-course "Custom CSS / JS" fields are not needed. Same files, same
+     tag as this bundle: window.BB_CDN is stamped by the build; when this
+     file is pasted straight into the field it falls back to the URL of the
+     portal.js <script> tag. courses.js has its own install guard, so a
+     course that still carries the old field snippet just loads it twice.
+     The stylesheet is switched off outside lesson pages because a couple of
+     its selectors (#brandLogo, the tab-row max-width) are not lesson-only.
+     Verified: loading from here gives the same computed styles as the
+     course-level field on every rule checked (topbar, grid, sidebar, card). */
+  (() => {
+    if (window.__bbCourseLoader) return;
+    window.__bbCourseLoader = true;
+
+    const onLesson = () => /^\/courses\/products\//.test(location.pathname);
+    const cdn = () => {
+      if (window.BB_CDN) return window.BB_CDN;
+      const s = document.querySelector('script[src*="botbuilders-portal@"][src*="/dist/portal.js"]');
+      return s ? s.src.replace(/\/[^/]*$/, '') : null;
+    };
+
+    let link = null, script = null;
+    const run = () => {
+      const base = cdn();
+      if (!base) return;
+      if (!link){
+        link = document.createElement('link');
+        link.id = 'bb-courses-css';
+        link.rel = 'stylesheet';
+        link.href = base + '/courses.css';
+        document.head.appendChild(link);
+      }
+      link.disabled = !onLesson();
+      if (onLesson() && !script){
+        script = document.createElement('script');
+        script.id = 'bb-courses-js';
+        script.src = base + '/courses.js';
+        document.head.appendChild(script);
+      }
+    };
+    run();
+    setInterval(run, 400);
+    window.addEventListener('popstate', run);
+  })();
+</script>

@@ -1,9 +1,16 @@
 window.BB_VERSION = '1.0.7 · 2026-10-09';
 window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.7 · 2026-10-09' });
+window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.7/dist';
 /* botbuilders-portal · courses.js · built from src/courses.js (1 script block) */
 
 /* ── block 1 ── */
 try {(() => {
+
+  // Loaded by the course-loader block in portal.js on lesson pages. A course
+  // that still carries the old per-course field snippet loads this twice —
+  // the guard makes the second copy a no-op.
+  if (window.__bbCoursesInstalled) return;
+  window.__bbCoursesInstalled = true;
 
   const TOTAL_SEGMENTS = 10;
 

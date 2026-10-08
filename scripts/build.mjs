@@ -68,6 +68,7 @@ for (const base of FILES) {
   const jsOut =
     `window.BB_VERSION = '${STAMP}';\n` +
     `window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { ${base}: '${STAMP}' });\n` +
+    `window.BB_CDN = '${CDN}';\n` +   // lets portal.js load courses.css/js from the same tag
     `/* botbuilders-portal · ${base}.js · built from src/${base}.js (${blocks} script block${blocks === 1 ? '' : 's'}) */\n\n` +
     body;
   writeFileSync(join(DIST, `${base}.js`), jsOut);

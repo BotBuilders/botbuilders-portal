@@ -466,3 +466,24 @@ html:not([data-bb-course]) .sidebar-toggle-btn {
 #bb-footer .bb-footer-sep {
   color: #d0d5dd;
 }
+
+/* ═══ 11. LESSON PAGES — ANTI-FLASH ════════════════════════════════════
+   courses.css / courses.js are loaded by the course-loader block in
+   portal.js once a lesson route is entered. Until courses.js has built the
+   course header, hide the portal's skeleton so it never flashes unstyled.
+   Same rules the course-field snippet used to carry inline; the 10s
+   animation is the failsafe if the course code never arrives.
+   ════════════════════════════════════════════════════════════════════ */
+
+#post-details-container:not(:has(#bb-topbar)) {
+  position: relative !important;
+}
+#post-details-container:not(:has(#bb-topbar)) > * {
+  opacity: 0;
+  animation: bbReveal 0s linear 10s forwards;
+}
+@keyframes bbReveal {
+  to {
+    opacity: 1;
+  }
+}

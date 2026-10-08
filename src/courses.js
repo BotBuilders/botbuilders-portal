@@ -1,6 +1,12 @@
 <script>
 try {(() => {
 
+  // Loaded by the course-loader block in portal.js on lesson pages. A course
+  // that still carries the old per-course field snippet loads this twice —
+  // the guard makes the second copy a no-op.
+  if (window.__bbCoursesInstalled) return;
+  window.__bbCoursesInstalled = true;
+
   const TOTAL_SEGMENTS = 10;
 
   // Lesson pages only. The portal injects this field's script the first time a
