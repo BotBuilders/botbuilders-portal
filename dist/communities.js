@@ -292,7 +292,7 @@ window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.6 �
 /* ── block 3 ── */
 /* ============================================================
    BLOCK 3 — Events page behaviour                        [NEW]
-   A. "Register Now" opens the event's Location link
+   A. "Register Now" opens the event's Location link (listed events only)
    B. Create Event defaults the timezone to America/Phoenix
    ============================================================ */
 (function () {
@@ -309,9 +309,37 @@ window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.6 �
 
      If the value does not look like a URL we do NOT intercept — the button
      keeps whatever the portal normally does. Better a working default than
-     a dead click.                                                          */
+     a dead click.
+
+     Only the events listed in REGISTER_REDIRECT_TITLES get the redirect
+     (carried over from the old calendar UI). Every other event registers
+     normally even if its Location holds a link.                            */
 
   var OPEN_IN_NEW_TAB = true;   // false -> navigate in the same tab
+
+  // Each entry = words that must ALL appear in the event title
+  // (case-insensitive). Add a line per event that should redirect.
+  var REGISTER_REDIRECT_TITLES = [
+    ['business model', 'workshop'],       // Business Model / Offers Workshop
+    ['lead generation', 'workshop'],      // Lead Generation / Funnels Workshop
+    ['automated systems', 'workshop'],    // Automated Systems / Workflows Workshop
+    ['sales optimization', 'workshop'],   // Sales Optimization / Conversion Workshop
+    ['traffic sources', 'workshop'],      // Traffic Sources / Ads Workshop
+    ['ai insiders', 'workshop', '(basics)'],
+    ['ai insiders', 'workshop', '(advanced)']
+  ];
+
+  function eventTitle() {
+    var el = document.getElementById('event-view-title');   // the modal's heading
+    return el ? (el.textContent || '').trim() : '';
+  }
+  function titleAllowed(title) {
+    if (!title) return false;
+    var t = title.toLowerCase();
+    return REGISTER_REDIRECT_TITLES.some(function (words) {
+      return words.every(function (w) { return t.indexOf(w) !== -1; });
+    });
+  }
 
   function locationUrl() {
     var el = document.getElementById('event-location-value');
@@ -335,6 +363,7 @@ window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.6 �
     var btn = e.target && e.target.closest && e.target.closest('#event-register-now-button');
     if (!btn) return;
 
+    if (!titleAllowed(eventTitle())) return;          // not a listed event -> normal registration
     var url = locationUrl();
     if (!url) return;                                 // leave default behaviour
 
