@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.2 · 2026-10-08';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.2 · 2026-10-08' });
+window.BB_VERSION = '1.0.3 · 2026-10-08';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.3 · 2026-10-08' });
 /* botbuilders-portal · portal.js · built from src/portal.js (5 script blocks) */
 
 /* ── block 1 ── */

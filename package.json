@@ -1,6 +1,6 @@
 {
   "name": "botbuilders-portal",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "BotBuilders client-portal (ClientClub) Custom JS/CSS, versioned and served from jsDelivr",
   "type": "module",
