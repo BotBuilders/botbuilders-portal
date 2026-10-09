@@ -931,8 +931,9 @@
      file is pasted straight into the field it falls back to the URL of the
      portal.js <script> tag. courses.js has its own install guard, so a
      course that still carries the old field snippet just loads it twice.
-     The stylesheet is switched off outside lesson pages because a couple of
-     its selectors (#brandLogo, the tab-row max-width) are not lesson-only.
+     The stylesheet only applies on lesson pages (media toggle, see below)
+     because a couple of its selectors (#brandLogo, the tab-row max-width)
+     are not lesson-only.
      Verified: loading from here gives the same computed styles as the
      course-level field on every rule checked (topbar, grid, sidebar, card). */
   (() => {
@@ -946,22 +947,38 @@
       return s ? s.src.replace(/\/[^/]*$/, '') : null;
     };
 
-    let link = null, script = null;
+    /* The stylesheet is switched with `media`, NOT `disabled`. Setting
+       disabled=true while the file is still downloading makes Chrome drop the
+       request, and re-enabling never restarts it — on a slow connection the
+       course CSS then never applied (half-built lesson until a refresh). With
+       media="not all" the browser still downloads the file in full and simply
+       doesn't apply it; flipping to "all" applies it instantly.
+       Failed loads (network blip) are retried a few times. */
+    let link = null, script = null, cssTries = 0, jsTries = 0;
+    const MAX_TRIES = 4;
     const run = () => {
       const base = cdn();
       if (!base) return;
-      if (!link){
+      const lesson = onLesson();
+      if (!link && (lesson || cssTries === 0) && cssTries < MAX_TRIES){
+        cssTries++;
         link = document.createElement('link');
         link.id = 'bb-courses-css';
         link.rel = 'stylesheet';
         link.href = base + '/courses.css';
+        link.onerror = () => { if (link) link.remove(); link = null; };
         document.head.appendChild(link);
       }
-      link.disabled = !onLesson();
-      if (onLesson() && !script){
+      if (link){
+        const want = lesson ? 'all' : 'not all';
+        if (link.media !== want) link.media = want;
+      }
+      if (lesson && !script && !window.__bbCoursesInstalled && jsTries < MAX_TRIES){
+        jsTries++;
         script = document.createElement('script');
         script.id = 'bb-courses-js';
         script.src = base + '/courses.js';
+        script.onerror = () => { if (script) script.remove(); script = null; };
         document.head.appendChild(script);
       }
     };
