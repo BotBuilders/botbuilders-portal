@@ -1,1 +1,1 @@
-(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.11/dist/courses.js';document.head.appendChild(s);})();
+(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.12/dist/courses.js';document.head.appendChild(s);})();
