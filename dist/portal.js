@@ -6,6 +6,11 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
 /* ── block 1 ── */
   (() => {
     const domain = window.location.origin;
+    /* The support community's slug differs per portal: "services" on the live
+       portal (portal.botbuilders.com), "support" on the test portal. Links use
+       the right one for this host; route checks accept either. */
+    const SUPPORT_GROUP = /(^|\.)portal\.botbuilders\.com$/.test(location.hostname) ? 'services' : 'support';
+    window.BB_SUPPORT_GROUP = SUPPORT_GROUP;
     /* Fallback only. The real sprite path is read off the cloned icon at run
        time — the filename carries a build hash that changes on every portal
        deploy, which is what silently blanked the injected icons once already. */
@@ -146,8 +151,8 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
        unhighlighted while every built-in item turned blue. Paint them from the
        path instead. (Automator AI is external; it is never "current".) */
     const NAV_ACTIVE_PATHS = {
-      'custom-menu-calendar-link': /^\/communities\/groups\/support\/events/,
-      'custom-menu-contact-link':  /^\/communities\/groups\/support\/about/,
+      'custom-menu-calendar-link': /^\/communities\/groups\/(support|services)\/events/,
+      'custom-menu-contact-link':  /^\/communities\/groups\/(support|services)\/about/,
     };
     function markActiveNav(){
       for (const [id, re] of Object.entries(NAV_ACTIVE_PATHS)){
@@ -232,8 +237,9 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
         if (!ext) wireSoftNav(a, path);
       }
       // Calendar is duplicate-safe: skipped if your other custom-JS already adds it.
-      add('Calendar', domain + '/communities/groups/support/events', 'custom-menu-calendar', 'appointments', false, '/communities/groups/support/events');
-      add('Contact',  domain + '/communities/groups/support/about',  'custom-menu-contact',  'explore',      false, '/communities/groups/support/about');
+      const grp = '/communities/groups/' + SUPPORT_GROUP;
+      add('Calendar', domain + grp + '/events', 'custom-menu-calendar', 'appointments', false, grp + '/events');
+      add('Contact',  domain + grp + '/about',  'custom-menu-contact',  'explore',      false, grp + '/about');
       add('Automator AI', 'https://app.automator.ai', 'custom-menu-automator', 'studio', true);
       return true;
     }
@@ -717,15 +723,16 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
     // path -> what the last breadcrumb should say instead.
     // Delete a line here to leave that page's crumb alone.
     const CRUMB_RENAMES = [
-      { match: /^\/communities\/groups\/support\/events/, from: 'Support', to: 'Calendar' },
-      { match: /^\/communities\/groups\/support\/about/,  from: 'Support', to: 'Contact'  },
+      // `from` lists every group display name we replace (test: Support, live: Services)
+      { match: /^\/communities\/groups\/(support|services)\/events/, from: ['Support', 'Services'], to: 'Calendar' },
+      { match: /^\/communities\/groups\/(support|services)\/about/,  from: ['Support', 'Services'], to: 'Contact'  },
     ];
     // Both routes live in the same community, so soft-navigating between them
     // reuses the breadcrumb node without re-rendering it — it still holds the
     // label we wrote on the previous page. Matching only on `from` ("Support")
     // would leave Contact reading "Calendar" forever, so treat every label we
     // might have written as replaceable too.
-    const CRUMB_REPLACEABLE = new Set(CRUMB_RENAMES.flatMap(r => [r.from, r.to]));
+    const CRUMB_REPLACEABLE = new Set(CRUMB_RENAMES.flatMap(r => [].concat(r.from, r.to)));
     // Labels we ourselves write into the crumb. Needed for the cleanup below:
     // Vue keeps the crumb node when you soft-navigate to another section and
     // does NOT re-patch the text we replaced, so "Calendar" leaked onto

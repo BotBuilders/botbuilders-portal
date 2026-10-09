@@ -13,7 +13,8 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
   window.__bbAboutSupportInstalled = true;
 
   var API_URL = "https://connect.botbuilders.cloud/webhook/1360de3a-1206-4a2c-8175-56219ea1623b";
-  var ABOUT_PATH = "/communities/groups/support/about";
+  // Live portal group is "services", test portal is "support" — accept both.
+  var ABOUT_PATH_RE = /^\/communities\/groups\/(support|services)\/about\/?$/;
   var CARD_SELECTOR = "main.main-content div.w-full > div.w-full.bg-background.p-4.rounded-lg.border.border-default.border-solid.shadow-sm";
   var ABOUT_FORM_WRAP_ID = "bb-about-support-form-wrap";
   var HIDE_STYLE_ID = "bb-about-support-hide-style";
@@ -63,7 +64,7 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
     return null;
   }
 
-  function isAboutPage(){ return location.pathname === ABOUT_PATH; }
+  function isAboutPage(){ return ABOUT_PATH_RE.test(location.pathname); }
 
   function ensureHideStyle(){
     if(document.getElementById(HIDE_STYLE_ID)) return;
