@@ -140,6 +140,7 @@
       'cp-portal-sidebar-nav-courses':    'Courses',
       'cp-portal-sidebar-nav-affiliates': 'Affiliates',
       'cp-portal-sidebar-nav-documents':  'File Share',
+      'cp-portal-sidebar-nav-loyalty':    'Loyalty',      // live portal only
     };
     /* Our injected items are plain <a>s, not Vue <router-link>s, so the portal
        never adds its active classes to them — Calendar and Contact stayed
