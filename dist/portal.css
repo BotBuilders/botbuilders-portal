@@ -40,6 +40,10 @@
 .app-sidebar-nav-item:has(a[href="/appointments"]) {
   display: none !important;
 }
+/* Loyalty — live portal only; hidden for now */
+.app-sidebar-nav-item:has(a[href="/loyalty"]) {
+  display: none !important;
+}
 /* Dashboard — the logo already links there */
 .app-sidebar-group:has(a[href="/dashboard"]) {
   display: none !important;
