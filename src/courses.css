@@ -240,6 +240,15 @@ a.postqueue-lesson.post-highlight .custom-word-break {
   font-size: 14px !important;
   padding: 0 !important;
 }
+/* Old per-course Custom CSS (e.g. Magic Cards) paints a fake label onto the
+   Next Lesson button with .navigation-btn::after { content: "Next Lesson >>" }.
+   On our blue pill it shows as ghost text behind the real label. The id
+   selector outranks the course field's class-only rule. */
+#bb-mark-slot .navigation-btn::before,
+#bb-mark-slot .navigation-btn::after {
+  content: none !important;
+  display: none !important;
+}
 /* hide original next-lesson row (moved into mark slot) */
 .post-details .mt-5.flex.justify-between.items-center {
   display: none !important;
