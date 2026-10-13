@@ -1,4 +1,4 @@
-/* BB_VERSION 1.0.13 · 2026-10-13 · botbuilders-portal · courses.css */
+/* BB_VERSION 1.0.13 · 2026-10-14 · botbuilders-portal · courses.css */
 
 /* Instructor card */
 #instructor-card {
@@ -284,6 +284,17 @@ a.postqueue-lesson.post-highlight .custom-word-break {
 }
 #bb-content-card::-webkit-scrollbar-thumb:hover {
   background: #b8bec9;
+}
+/* One scrollbar only. Some lessons (long descriptions with several videos)
+   get a fixed-height description box with its own overflow-y:auto from the
+   portal, which nests a second scrollbar inside the card. The card is the
+   lesson column's only scroller, so let the description grow to full height. */
+#bb-content-card .post-body,
+#bb-content-card .post-description-container,
+#bb-content-card .video-post-body-container {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 #bb-content-card .post-body {
   background: transparent !important;
