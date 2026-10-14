@@ -325,7 +325,8 @@
     ['sales optimization', 'workshop'],   // Sales Optimization / Conversion Workshop
     ['traffic sources', 'workshop'],      // Traffic Sources / Ads Workshop
     ['ai insiders', 'workshop', '(basics)'],
-    ['ai insiders', 'workshop', '(advanced)']
+    ['ai insiders', 'workshop', '(advanced)'],
+    ['bot', 'orientation']                // UAIS Bot Orientation / BotBuilders Orientation
   ];
 
   function eventTitle() {

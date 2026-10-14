@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.14 · 2026-10-14';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.14 · 2026-10-14' });
+window.BB_VERSION = '1.0.14 · 2026-10-15';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.14 · 2026-10-15' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.14/dist';
 /* botbuilders-portal · communities.js · built from src/communities.js (3 script blocks) */
 
@@ -328,7 +328,8 @@ window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0
     ['sales optimization', 'workshop'],   // Sales Optimization / Conversion Workshop
     ['traffic sources', 'workshop'],      // Traffic Sources / Ads Workshop
     ['ai insiders', 'workshop', '(basics)'],
-    ['ai insiders', 'workshop', '(advanced)']
+    ['ai insiders', 'workshop', '(advanced)'],
+    ['bot', 'orientation']                // UAIS Bot Orientation / BotBuilders Orientation
   ];
 
   function eventTitle() {
