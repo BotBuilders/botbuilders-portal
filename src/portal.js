@@ -987,3 +987,34 @@
     window.addEventListener('popstate', run);
   })();
 </script>
+
+<script>
+  /* ────────── Community code loader ──────────
+     Loads dist/communities.js on /communities/* routes. The Community
+     "Custom JS" field is rendered inside the portal's app on community pages
+     and, on some loads (e.g. the first one after sign-in), never executes —
+     no support form, no Register Now redirect, no Week view. Loading it from
+     here makes it independent of that field. Every block in communities.js
+     has its own install guard, so the field loading it too is harmless. */
+  (() => {
+    if (window.__bbCommunityLoader) return;
+    window.__bbCommunityLoader = true;
+    const onCommunity = () => /^\/communities\//.test(location.pathname);
+    let script = null, tries = 0;
+    const run = () => {
+      if (!onCommunity() || script || tries >= 4) return;
+      if (window.__bbAboutSupportInstalled && window.__bbWeekViewInstalled && window.__bbEventsExtrasInstalled) return;
+      const base = window.BB_CDN;
+      if (!base) return;
+      tries++;
+      script = document.createElement('script');
+      script.id = 'bb-communities-js';
+      script.src = base + '/communities.js';
+      script.onerror = () => { if (script) script.remove(); script = null; };
+      document.head.appendChild(script);
+    };
+    run();
+    setInterval(run, 400);
+    window.addEventListener('popstate', run);
+  })();
+</script>

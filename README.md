@@ -39,12 +39,20 @@ caching, instant feedback — then cut a tag once the change settles.
 
 | Portal field | Paste this | Loads |
 |---|---|---|
-| Portal → Custom JS | `field-snippets/portal-js.html` | inline Bob host stub + `dist/portal.js` |
+| Portal → Custom JS (raw-JS field) | `field-snippets/portal-js.js` | Bob host stub + loader for `dist/portal.js` (which also loads courses + communities) |
+| Header code | only the selfhelp.ai widget loader — **no** portal.js line | — |
 | Portal → Custom CSS | `field-snippets/portal-css.css` | `dist/portal.css` |
 | Course → Custom JS | *(not needed — see below)* `field-snippets/courses-js.js` | `dist/courses.js` |
 | Course → Custom CSS | *(not needed — see below)* `field-snippets/courses-css.css` | `dist/courses.css` |
 | Community → Custom JS | `field-snippets/communities-js.html` | `dist/communities.js` |
 | Community → Custom CSS | `field-snippets/communities-css.css` | `dist/communities.css` |
+
+**Put the Portal loader in the Custom JS field, not the header code.** On
+community pages the portal renders header code inside its app, and on some
+loads (e.g. right after sign-in) those scripts never execute — the left menu
+then stays half-built. The Custom JS field is written into `<head>` and always
+runs. portal.js also loads `communities.js` itself, so the Community JS field
+is optional too.
 
 **The two Course fields no longer need anything.** Since v1.0.8 the portal
 JS loads `courses.css` and `courses.js` itself on every `/courses/products/*`

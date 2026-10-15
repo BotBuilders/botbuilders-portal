@@ -70,7 +70,11 @@ for (const base of FILES) {
     `window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { ${base}: '${STAMP}' });\n` +
     `window.BB_CDN = '${CDN}';\n` +   // lets portal.js load courses.css/js from the same tag
     `/* botbuilders-portal · ${base}.js · built from src/${base}.js (${blocks} script block${blocks === 1 ? '' : 's'}) */\n\n` +
-    body;
+    // portal.js can be loaded from two places during a field migration (header
+    // code + Custom JS); its blocks have no individual guards, so run it once.
+    (base === 'portal'
+      ? `if (!window.__bbPortalRan) {\nwindow.__bbPortalRan = true;\n\n${body}\n}\n`
+      : body);
   writeFileSync(join(DIST, `${base}.js`), jsOut);
   ok(`dist/${base}.js  (${blocks} block${blocks === 1 ? '' : 's'}, ${jsOut.length} bytes)`);
 
@@ -104,6 +108,26 @@ const snippets = {
 })();
 </script>
 <script src="${CDN}/portal.js"></script>
+`,
+
+  // Raw-JS form for the Portal "Custom JS" field. The portal places that field
+  // directly in <head> and always executes it — unlike the header code, which
+  // on community pages is rendered inside the app and sometimes never runs.
+  'portal-js.js': `/* botbuilders-portal loader — Bob host stub + portal.js. See README. */
+(function () {
+  var p = location.pathname;
+  if ((p.replace(/\\/+$/, '') === '/dashboard' || /^\\/courses\\/products\\//.test(p)) && !document.querySelector('[data-bob-embed], #bob-embed')) {
+    var d = document.createElement('div');
+    d.setAttribute('data-bob-embed', '');
+    d.style.cssText = 'position:absolute;left:-10000px;top:0;width:400px;height:600px;';
+    (document.body || document.documentElement).appendChild(d);
+  }
+  if (window.__bbPortalRan || document.getElementById('bb-portal-js')) return;
+  var s = document.createElement('script');
+  s.id = 'bb-portal-js';
+  s.src = '${CDN}/portal.js';
+  (document.head || document.documentElement).appendChild(s);
+})();
 `,
 
   'portal-css.css': `@import url("${CDN}/portal.css");
