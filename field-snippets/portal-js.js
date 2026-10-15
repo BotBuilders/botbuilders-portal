@@ -10,6 +10,6 @@
   if (window.__bbPortalRan || document.getElementById('bb-portal-js')) return;
   var s = document.createElement('script');
   s.id = 'bb-portal-js';
-  s.src = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.15/dist/portal.js';
+  s.src = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.16/dist/portal.js';
   (document.head || document.documentElement).appendChild(s);
 })();
