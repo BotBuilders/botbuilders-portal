@@ -1,7 +1,7 @@
-window.BB_VERSION = '1.0.16 · 2026-10-15';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.16 · 2026-10-15' });
+window.BB_VERSION = '1.0.16 · 2026-10-22';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.16 · 2026-10-22' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.16/dist';
-/* botbuilders-portal · portal.js · built from src/portal.js (7 script blocks) */
+/* botbuilders-portal · portal.js · built from src/portal.js (8 script blocks) */
 
 if (!window.__bbPortalRan) {
 window.__bbPortalRan = true;
@@ -527,11 +527,14 @@ window.__bbPortalRan = true;
       if (!panel){
         panel = document.createElement("section"); panel.id = "bb-priority-courses";
         panel.className = "rounded-xl bg-background p-4 border border-solid border-default shadow-sm";
+        const head = document.createElement("div"); head.className = "bb-pc-head";
         const h = document.createElement("h2");
         h.className = "hr-text hr-text-2xl hr-text-semibold text-700";
         // Heading spacing lives in the stylesheet: #bb-priority-courses h2
         h.textContent = "Assigned Courses";
-        panel.appendChild(h);
+        const cnt = document.createElement("span"); cnt.className = "bb-pc-count"; cnt.hidden = true;
+        head.appendChild(h); head.appendChild(cnt);
+        panel.appendChild(head);
         const body = document.createElement("div"); body.className = "bb-pc-body";
         panel.appendChild(body);
       }
@@ -572,14 +575,21 @@ window.__bbPortalRan = true;
       panel.setAttribute('data-sig', sig);
       body.innerHTML = '';
       if (!matched.length){
+        const cnt0 = panel.querySelector('.bb-pc-count'); if (cnt0) cnt0.hidden = true;
         const p = document.createElement('div'); p.className = 'hr-text text-600';
         p.textContent = 'No assigned courses yet.'; body.appendChild(p); return;
       }
-      const list = document.createElement('div');
-      list.style.cssText = 'display:flex;flex-direction:column;gap:12px;';
+      const wrap = document.createElement('div'); wrap.className = 'bb-course-list-wrap';
+      const list = document.createElement('div'); list.className = 'bb-course-list';
+      const cnt = panel.querySelector('.bb-pc-count');
+      if (cnt){ cnt.textContent = matched.length + (matched.length === 1 ? ' course' : ' courses'); cnt.hidden = false; }
       matched.forEach(c => {
         const card = document.createElement('div'); card.className = 'bb-course-card';
-        // title + optional blurb stack on the left, button stays right
+        card.dataset.link = c.link;
+        const icon = document.createElement('div'); icon.className = 'bb-course-icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>';
+        card.appendChild(icon);
+        // title + optional blurb stack in the middle, button stays right
         const text = document.createElement('div'); text.className = 'bb-course-text';
         const t = document.createElement('span'); t.className = 'hr-text hr-text-lg text-700 bb-course-title'; t.textContent = c.name;
         text.appendChild(t);
@@ -592,10 +602,16 @@ window.__bbPortalRan = true;
         b.textContent = 'Go to Course'; b.dataset.link = c.link;
         card.appendChild(text); card.appendChild(b); list.appendChild(card);
       });
-      body.appendChild(list);
+      wrap.appendChild(list);
+      body.appendChild(wrap);
+      // fade at the bottom while more cards are hidden below the fold
+      const syncMore = () => wrap.classList.toggle('bb-has-more', list.scrollTop + list.clientHeight < list.scrollHeight - 4);
+      list.addEventListener('scroll', syncMore, { passive: true });
+      requestAnimationFrame(syncMore);
       if (!panel.__clickWired){
         panel.__clickWired = true;
-        panel.addEventListener('click', e => { const b = e.target.closest('.bb-course-btn'); if (b) window.location.href = b.dataset.link; });
+        // the whole card is clickable, not just the button
+        panel.addEventListener('click', e => { const c = e.target.closest('.bb-course-card'); if (c && c.dataset.link) window.location.href = c.dataset.link; });
       }
     }
     /* ────────── run: non-blocking startup ────────── */
@@ -1018,6 +1034,48 @@ window.__bbPortalRan = true;
     run();
     setInterval(run, 400);
     window.addEventListener('popstate', run);
+  })();
+
+/* ── block 8 ── */
+  /* ────────── Hover labels for the injected menu items ──────────
+     With the sidebar collapsed to icons the portal shows each item's name in
+     a tooltip, but it wires those when it renders — Calendar, Contact and
+     Automator AI are added later by block 1, so they had none. This shows a
+     look-alike (styled in portal.css §12) only while the menu is collapsed. */
+  (() => {
+    if (window.__bbNavTip) return;
+    window.__bbNavTip = true;
+    const SEL = '#custom-menu-calendar-link, #custom-menu-contact-link, #custom-menu-automator-link';
+    let tip = null;
+    const ensure = () => {
+      if (tip && tip.isConnected) return tip;
+      tip = document.createElement('div');
+      tip.id = 'bb-nav-tip';
+      tip.setAttribute('role', 'tooltip');
+      document.body.appendChild(tip);
+      return tip;
+    };
+    const hide = () => { if (tip) tip.classList.remove('bb-show'); };
+    document.addEventListener('mouseover', (e) => {
+      const a = e.target.closest && e.target.closest(SEL);
+      if (!a) return;
+      const r = a.getBoundingClientRect();
+      if (r.width > 64) { hide(); return; }          // menu expanded: label is already visible
+      const label = ((a.querySelector('span') || {}).textContent || '').trim();
+      if (!label) return;
+      const t = ensure();
+      t.textContent = label;
+      t.style.left = (r.right + 10) + 'px';
+      t.style.top = (r.top + r.height / 2) + 'px';
+      t.classList.add('bb-show');
+    });
+    document.addEventListener('mouseout', (e) => {
+      const a = e.target.closest && e.target.closest(SEL);
+      if (a && !(e.relatedTarget && a.contains(e.relatedTarget))) hide();
+    });
+    window.addEventListener('scroll', hide, true);
+    document.addEventListener('click', hide, true);
+    window.addEventListener('popstate', hide);
   })();
 
 }

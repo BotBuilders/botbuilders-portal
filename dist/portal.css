@@ -1,4 +1,4 @@
-/* BB_VERSION 1.0.16 · 2026-10-15 · botbuilders-portal · portal.css */
+/* BB_VERSION 1.0.16 · 2026-10-22 · botbuilders-portal · portal.css */
 
 /* ═══════════════════════════════════════════════════════════════════════
    BOTBUILDERS PORTAL — CUSTOM CSS
@@ -80,8 +80,8 @@
 
 
 /* ═══ 2. DASHBOARD LAYOUT ══════════════════════════════════════════════
-   Two rows, both 2/3 + 1/3:
-     top    — Pick up where you left off (2/3) | Bob        (1/3)
+   Two rows:
+     top    — Pick up where you left off (3/5) | Bob        (2/5)
      bottom — Assigned Courses           (2/3) | Need Help  (1/3)
    `flex: 2 1 0` / `flex: 1 1 0` rather than percentages: with a 16px gap,
    percentage bases overflow the row and get shrunk back unevenly. A zero
@@ -103,13 +103,16 @@
   align-items: stretch;
 }
 
+/* Top row 3:2 — Bob gets 40% (was 33%) and the continue-watching card
+   shrinks with it. The bottom row keeps its original 2:1
+   (Assigned Courses | Need Help). */
 #bb-top-row > #continue-watching-section-root {
-  flex: 2 1 0;
+  flex: 3 1 0;
   min-width: 0;
 }
 #bb-top-row > #bb-right-col {
-  flex: 1 1 0;
-  min-width: 280px;        /* a third of a narrow desktop is under Bob's 240px floor */
+  flex: 2 1 0;
+  min-width: 320px;
 }
 
 /* `order` puts Need Help on the right while the JS still builds it first in
@@ -151,7 +154,9 @@
 #bb-top-row > #bb-right-col {
   position: sticky;
   top: 24px;
-  min-height: min(600px, calc(100vh - 104px));
+  /* 520 (was 600) so Bob doesn't stretch the shorter continue-watching card
+     and leave blank space under it; Bob still grows with the row. */
+  min-height: min(520px, calc(100vh - 104px));
   max-height: calc(100vh - 104px);
 }
 #bb-right-col > [data-bob-embed] {
@@ -175,7 +180,14 @@
 #continue-watching-section-root img,
 #continue-watching-section-root video {
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;   /* fill the (capped) thumbnail box below */
+  object-fit: cover;
+}
+/* The portal keeps the thumbnail in a 16:9 box. Capping the image alone left
+   the box at full height — a blank strip between thumbnail and title — so
+   cap the box itself; the image fills it with object-fit: cover. */
+#continue-watching-section-root .relative.overflow-hidden.h-full.w-full {
+  max-height: 280px;
 }
 
 
@@ -190,17 +202,93 @@
   line-height: 1.25;       /* and a 33.6px line-height on 21px text */
 }
 
+/* Header: title + course-count chip */
+#bb-priority-courses .bb-pc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+#bb-priority-courses .bb-pc-head h2 {
+  margin: 0;
+}
+.bb-pc-count {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: rgb(0, 78, 235);
+  background: #eef4ff;
+  border-radius: 999px;
+  padding: 5px 9px;
+}
+
+/* Scrollable list: about four cards tall, then it scrolls inside the panel.
+   The wrapper draws a soft fade at the bottom while more cards are hidden
+   (JS toggles .bb-has-more). */
+.bb-course-list-wrap {
+  position: relative;
+}
+.bb-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 392px;
+  overflow-y: auto;
+  padding: 8px 4px 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: #d0d5dd transparent;
+}
+.bb-course-list::-webkit-scrollbar { width: 6px; }
+.bb-course-list::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 999px; }
+.bb-course-list-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 8px;
+  bottom: 0;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.bb-course-list-wrap.bb-has-more::after {
+  opacity: 1;
+}
+
 .bb-course-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border-default, #e5e7eb);
+  border-left: 3px solid rgb(0, 78, 235);
   border-radius: 10px;
-  margin-top: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+.bb-course-card:hover {
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
+  transform: translateY(-1px);
+}
+.bb-course-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eef4ff;
+  color: rgb(0, 78, 235);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bb-course-icon svg {
+  width: 20px;
+  height: 20px;
 }
 .bb-course-text {
+  flex: 1 1 auto;
   min-width: 0;            /* lets long titles/blurbs wrap instead of pushing the button */
 }
 /* The portal's own span renders at 14px/400 in a mid grey — near-identical to
@@ -218,17 +306,32 @@
   color: #667085;
 }
 .bb-course-btn {
+  flex: 0 0 auto;
   white-space: nowrap;
-  padding: 8px 16px;
-  border: 1px solid var(--border-default, #d1d5db);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #c7d7fe;
   border-radius: 8px;
-  background: transparent;
-  color: inherit;
+  background: #fff;
+  color: rgb(0, 78, 235);
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.bb-course-btn:hover {
-  background: var(--sidebar-hover, #f3f4f6);
+.bb-course-btn::after {
+  content: "→";
+  transition: transform 0.15s ease;
+}
+.bb-course-card:hover .bb-course-btn {
+  background: rgb(0, 78, 235);
+  border-color: rgb(0, 78, 235);
+  color: #fff;
+}
+.bb-course-card:hover .bb-course-btn::after {
+  transform: translateX(2px);
 }
 
 /* ---- My Courses grid: drop the small avatar left of each card title ----
@@ -473,23 +576,81 @@ html:not([data-bb-course]) .sidebar-toggle-btn {
   color: #d0d5dd;
 }
 
-/* ═══ 11. LESSON PAGES — ANTI-FLASH ════════════════════════════════════
-   courses.css / courses.js are loaded by the course-loader block in
-   portal.js once a lesson route is entered. Until courses.js has built the
-   course header, hide the portal's skeleton so it never flashes unstyled.
-   Same rules the course-field snippet used to carry inline; the 10s
-   animation is the failsafe if the course code never arrives.
+/* ═══ 11. LESSON PAGES — CLEAN LOAD ═══════════════════════════════════
+   courses.js builds the lesson layout in stages (header, lesson title,
+   content card, Bob column) while courses.css is still arriving, so
+   revealing early showed half-built states. The lesson stays hidden behind
+   one spinner until courses.js adds .bb-ready — everything built AND styled
+   — then fades in. Lessons on other templates get .bb-ready immediately.
+   The 10s animation is the failsafe if the course code never arrives.
    ════════════════════════════════════════════════════════════════════ */
 
-#post-details-container:not(:has(#bb-topbar)) {
+#post-details-container:not(.bb-ready) {
   position: relative !important;
+  min-height: 60vh;
 }
-#post-details-container:not(:has(#bb-topbar)) > * {
+#post-details-container:not(.bb-ready) > * {
   opacity: 0;
   animation: bbReveal 0s linear 10s forwards;
 }
-@keyframes bbReveal {
-  to {
-    opacity: 1;
-  }
+#post-details-container:not(.bb-ready)::before {
+  content: "";
+  position: absolute;
+  top: 40vh;
+  left: 50%;
+  width: 32px;
+  height: 32px;
+  margin: -16px 0 0 -16px;
+  border: 3px solid #dbe4ff;
+  border-top-color: rgb(0, 78, 235);
+  border-radius: 50%;
+  animation: bbSpin 0.8s linear infinite, bbHide 0s linear 10s forwards;
+  z-index: 1;
+}
+#post-details-container.bb-ready > * {
+  animation: bbFadeIn 0.18s ease-out;
+}
+@keyframes bbReveal { to { opacity: 1; } }
+@keyframes bbHide { to { opacity: 0; } }
+@keyframes bbSpin { to { transform: rotate(360deg); } }
+@keyframes bbFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ═══ 12. HOVER LABELS FOR INJECTED MENU ITEMS ═════════════════════════
+   When the sidebar is collapsed to icons, the portal shows a dark tooltip
+   with each item's name. Calendar, Contact and Automator AI are added by
+   our JS after the portal wires its tooltips, so they never got one. JS
+   positions #bb-nav-tip; this styles it to match the portal's own.
+   ════════════════════════════════════════════════════════════════════ */
+
+#bb-nav-tip {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
+  background: #101828;
+  color: #fff;
+  font-family: "Inter var", -apple-system, system-ui, sans-serif;   /* measured off the portal's own tooltip */
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+  padding: 8px;
+  border: 1px solid transparent;   /* the portal's tooltip has the same — keeps the height identical */
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+#bb-nav-tip.bb-show {
+  opacity: 1;
+}
+#bb-nav-tip::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  background: #101828;
+  transform: translateY(-50%) rotate(45deg);
 }

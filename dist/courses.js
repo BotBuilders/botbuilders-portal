@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.16 · 2026-10-15';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.16 · 2026-10-15' });
+window.BB_VERSION = '1.0.16 · 2026-10-22';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.16 · 2026-10-22' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.16/dist';
 /* botbuilders-portal · courses.js · built from src/courses.js (1 script block) */
 
@@ -43,7 +43,8 @@ try {(() => {
   function setFullWidth(){
     const inner=document.querySelector('.cp-main-content-inner');
     if(!inner) return;
-    if(document.getElementById('post-details-container')){
+    const pdc=document.getElementById('post-details-container');
+    if(pdc && pdc.classList.contains('neue-template')){
       inner.style.setProperty('max-width','none','important');
       inner.style.setProperty('width','100%','important');
       inner.style.setProperty('margin-left','0','important');
@@ -171,6 +172,35 @@ try {(() => {
     if(!card){ card=document.createElement('div'); card.id='bb-content-card'; postDetails.parentElement.insertBefore(card, postDetails); }
     if(!card.contains(postDetails)) card.appendChild(postDetails);
     if(attached && !card.contains(attached)) card.appendChild(attached);
+    ensureScrollHint(card);
+  }
+
+  // ---- "Scroll for more" hint (styled in courses.css) ----
+  function ensureScrollHint(card){
+    let hint=document.getElementById('bb-scroll-hint');
+    if(!hint){
+      hint=document.createElement('div');
+      hint.id='bb-scroll-hint';
+      hint.innerHTML='<div class="bb-scroll-fade"></div>'
+        +'<button type="button" class="bb-scroll-pill">Scroll for more'
+        +'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>';
+      hint.querySelector('.bb-scroll-pill').addEventListener('click',()=>{
+        const c=document.getElementById('bb-content-card');
+        if(c) c.scrollBy({ top: Math.round(c.clientHeight*0.8), behavior:'smooth' });
+      });
+    }
+    if(card.lastElementChild!==hint) card.appendChild(hint);   // keep it last so sticky pins it to the bottom
+    if(!card.__bbScrollWired){
+      card.__bbScrollWired=true;
+      card.addEventListener('scroll', syncScrollHint, { passive:true });
+    }
+    syncScrollHint();
+  }
+  function syncScrollHint(){
+    const c=document.getElementById('bb-content-card');
+    if(!c) return;
+    const more=c.scrollHeight - c.clientHeight - c.scrollTop > 24;
+    c.classList.toggle('bb-scroll-more', more);
   }
 
   // ---- Bob chat bot ----
@@ -221,6 +251,8 @@ try {(() => {
   function placeBot(){
     const host=document.getElementById('bb-bot-host');
     if(!host) return;
+    const pdc=document.getElementById('post-details-container');
+    if(pdc && !pdc.classList.contains('bb-ready')){ host.style.display='none'; return; }   // revealed with the lesson
     const slot=document.getElementById('bb-bot-slot');
     const r=(slot && slot.isConnected && slot.offsetParent) ? slot.getBoundingClientRect() : null;
     // not a lesson page / mobile / layout still loading -> hide
@@ -247,14 +279,45 @@ try {(() => {
     try{
       setFullWidth();                           // also undoes the full-width styles after leaving a lesson
       if(!onLesson()){ placeBot(); return; }    // placeBot() hides #bb-bot-host off lesson pages
+      const pdc=document.getElementById('post-details-container');
+      if(pdc && !pdc.classList.contains('neue-template')){
+        // Other lesson templates (Neo Classic, Classic…) keep the portal's stock
+        // layout — building our header on them gave a half-styled page.
+        pdc.classList.add('bb-ready'); placeBot(); return;
+      }
       setShellTop(); buildTopBar(); buildLessonHead(); buildContentCard(); buildRightCol(); buildBotCol();
+      markReady();
     }catch(e){ /* no-op */ }
   }
+
+  // Reveal the lesson only once every piece is built AND courses.css has
+  // styled it (the stylesheet can land after the script). portal.css keeps
+  // #post-details-container hidden behind a spinner until .bb-ready.
+  function markReady(){
+    const pdc=document.getElementById('post-details-container');
+    if(!pdc || pdc.classList.contains('bb-ready')) return;
+    const top=document.getElementById('bb-topbar'), slot=document.getElementById('bb-bot-slot');
+    const built=top && document.getElementById('bb-lesson-head') && document.getElementById('bb-content-card') && slot;
+    if(!built) return;
+    const styled=getComputedStyle(top).display==='flex' && slot.getBoundingClientRect().width>200;
+    if(!styled) return;
+    // The portal fills the lesson list (and so the progress count and the
+    // active-lesson title) after the rest of the page. Wait for the list and
+    // the highlighted lesson; if a course never highlights one, give it 1.5s.
+    const lessons=document.querySelectorAll('a.postqueue-lesson').length;
+    if(!lessons){ readySince=0; return; }
+    if(!readySince) readySince=Date.now();
+    const active=document.querySelector('a.postqueue-lesson.post-highlight');
+    if(!active && Date.now()-readySince<1500) return;
+    buildTopBar(); buildLessonHead();            // refresh count + title now the list is in
+    requestAnimationFrame(()=>{ pdc.classList.add('bb-ready'); placeBot(); syncScrollHint(); });
+  }
+  let readySince=0;
 
   window.addEventListener('resize', () => { setShellTop(); placeBot(); });
   document.addEventListener('scroll', placeBot, true);   // keep bot aligned if the page scrolls
   // the portal loads lessons in stages, so keep re-aligning the bot (cheap: reads one box)
-  setInterval(placeBot, 500);
+  setInterval(()=>{ if(onLesson()){ markReady(); syncScrollHint(); } placeBot(); }, 400);
 
   // ---- loop-safe scheduler ----
   let lastKey = '';

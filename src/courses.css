@@ -49,7 +49,7 @@
   gap: 28px;
   background: #fff;
   border-bottom: 1px solid #eaeaea;
-  padding: 14px 28px;
+  padding: 10px 28px;
   width: 100%;
 }
 #bb-topbar .bb-course-left .eyebrow {
@@ -117,11 +117,11 @@
   padding-right: 380px !important;
 }
 .main-section {
-  padding: 28px 32px 40px 32px !important;
+  padding: 20px 32px 16px 32px !important;   /* tighter so the content card gets the height */
 }
 /* sidebar section headers */
 .category-title.postqueue-category {
-  font-size: 14px !important;
+  font-size: 15.5px !important;
   font-weight: 700 !important;
   color: var(--bb-ink) !important;
   padding: 14px 18px !important;
@@ -143,7 +143,7 @@
 }
 /* sidebar lesson rows */
 a.postqueue-lesson {
-  font-size: 14px !important;
+  font-size: 15.5px !important;
   color: #475467 !important;
   padding: 11px 14px 11px 20px !important;
   margin: 1px 8px !important;
@@ -192,7 +192,7 @@ a.postqueue-lesson.post-highlight .custom-word-break {
 }
 /* ===== MARK AS COMPLETE + NEXT LESSON row ===== */
 #bb-mark-slot {
-  margin: 10px 0 18px 0 !important;
+  margin: 8px 0 12px 0 !important;
   display: flex !important;
   align-items: center !important;
   gap: 10px !important;
@@ -477,34 +477,85 @@ a.postqueue-lesson.post-highlight .custom-word-break {
   padding-top: 8px !important;
 }
 
-/* ===== LOADING STATE =====
-   While the portal shows its grey skeleton (before our JS has built the
-   course header), hide it and show one clean spinner instead.
-   Failsafe: content fades back in after 10s even if the JS never runs. */
-#post-details-container:not(:has(#bb-topbar)) {
-  position: relative !important;
+/* LOADING STATE moved to portal.css §11 (keyed on .bb-ready, set by courses.js). */
+
+/* ===== COURSE MENU: no underlines =====
+   The portal underlines lesson links (seen on the active lesson). */
+#category-list a,
+#category-list a *,
+#category-list a:hover,
+#category-list a:hover *,
+#category-list .postqueue-category,
+#category-list .postqueue-category * {
+  text-decoration: none !important;
 }
-#post-details-container:not(:has(#bb-topbar)) > * {
-  opacity: 0; /* no !important, or the 10s failsafe animation can't override it */
-  animation: bbReveal 0s linear 10s forwards;
+
+/* ===== "SCROLL FOR MORE" HINT =====
+   The content card is the lesson column's only scroller, but at first glance
+   it reads as a static box. courses.js keeps #bb-scroll-hint as the card's
+   last child (sticky to its bottom edge) and toggles .bb-scroll-more on the
+   card while there is content below the fold: a soft fade plus a pill that
+   scrolls the card when clicked. Hidden at the end and when nothing scrolls. */
+#bb-content-card {
+  position: relative;
 }
-#post-details-container:not(:has(#bb-topbar))::before {
-  content: "";
+#bb-scroll-hint {
+  position: sticky;
+  bottom: -18px;            /* the card's bottom padding: sit on the edge */
+  height: 0;
+  margin: 0 -18px;
+  z-index: 3;
+  pointer-events: none;
+}
+#bb-scroll-hint .bb-scroll-fade {
   position: absolute;
-  top: 50%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 96px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 85%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+#bb-scroll-hint .bb-scroll-pill {
+  position: absolute;
   left: 50%;
-  width: 32px;
-  height: 32px;
-  margin: -16px 0 0 -16px;
-  border: 3px solid #dbe4ff;
-  border-top-color: var(--bb-blue);
-  border-radius: 50%;
-  animation: bbSpin 0.8s linear infinite;
-  z-index: 1;
+  bottom: 14px;
+  transform: translate(-50%, 6px);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--bb-line);
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.12);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s ease;
 }
-@keyframes bbSpin {
-  to { transform: rotate(360deg); }
+#bb-scroll-hint .bb-scroll-pill:hover {
+  background: #f9fafb;
 }
-@keyframes bbReveal {
-  to { opacity: 1; }
+#bb-scroll-hint .bb-scroll-pill svg {
+  width: 14px;
+  height: 14px;
+  animation: bbNudge 1.6s ease-in-out infinite;
+}
+#bb-content-card.bb-scroll-more #bb-scroll-hint .bb-scroll-fade {
+  opacity: 1;
+}
+#bb-content-card.bb-scroll-more #bb-scroll-hint .bb-scroll-pill {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+@keyframes bbNudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
 }
