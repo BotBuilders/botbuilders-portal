@@ -1,4 +1,4 @@
-/* BB_VERSION 1.0.17 · 2026-10-22 · botbuilders-portal · courses.css */
+/* BB_VERSION 1.0.17 · 2026-10-23 · botbuilders-portal · courses.css */
 
 /* Instructor card */
 #instructor-card {
@@ -123,7 +123,7 @@
 }
 /* sidebar section headers */
 .category-title.postqueue-category {
-  font-size: 15.5px !important;
+  font-size: 17px !important;
   font-weight: 700 !important;
   color: var(--bb-ink) !important;
   padding: 14px 18px !important;
@@ -145,7 +145,7 @@
 }
 /* sidebar lesson rows */
 a.postqueue-lesson {
-  font-size: 15.5px !important;
+  font-size: 16px !important;
   color: #475467 !important;
   padding: 11px 14px 11px 20px !important;
   margin: 1px 8px !important;
@@ -480,6 +480,19 @@ a.postqueue-lesson.post-highlight .custom-word-break {
 }
 
 /* LOADING STATE moved to portal.css §11 (keyed on .bb-ready, set by courses.js). */
+
+/* ===== COURSE MENU: text size =====
+   Repeated with the #category-list id so it outranks leftover per-course
+   Custom CSS (e.g. an old @import of courses.css v1.0.1 that sets 14px
+   !important and loads after ours). */
+#category-list a.postqueue-lesson,
+#category-list a.postqueue-lesson .custom-word-break {
+  font-size: 16px !important;
+}
+#category-list .category-title.postqueue-category,
+#category-list .category-title.postqueue-category .custom-word-break {
+  font-size: 17px !important;
+}
 
 /* ===== COURSE MENU: no underlines =====
    The portal underlines lesson links (seen on the active lesson). */
