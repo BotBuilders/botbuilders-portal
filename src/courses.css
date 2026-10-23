@@ -399,7 +399,10 @@ a.postqueue-lesson.post-highlight .custom-word-break {
     grid-template-rows: minmax(0, 1fr) !important;
     align-items: stretch !important;
     /* 3 columns: menu (30% narrower than before) | lesson | Bob chat bot */
-    grid-template-columns: clamp(210px, 19%, 336px) minmax(0, 1fr) clamp(320px, 26%, 420px) !important;
+    /* Bob column 26% -> 30% (max 420 -> 460) so it's closer to the dashboard's
+       width; the lesson column keeps a 560px floor so the video stays big —
+       on narrower screens Bob gives the width back first (min 320px). */
+    grid-template-columns: clamp(210px, 19%, 336px) minmax(560px, 1fr) clamp(320px, min(30%, calc(100% - 336px - 560px)), 460px) !important;
   }
   .neue-template > .grid.grid-cols-12 > #category-list.side-panel {
     grid-column: 1 !important;

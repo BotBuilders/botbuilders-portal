@@ -1077,3 +1077,43 @@
     window.addEventListener('popstate', hide);
   })();
 </script>
+
+<script>
+  /* ────────── Affiliates: "Become an affiliate" sign-up banner ──────────
+     A slim banner above the Affiliates tab bar (Campaigns, Sub Affiliates,
+     Leads / Customers…), on every /affiliates/* page, linking to the
+     affiliate sign-up. Styled in portal.css §13. */
+  (() => {
+    if (window.__bbAffCta) return;
+    window.__bbAffCta = true;
+    const SIGNUP_URL = 'https://affiliate.botbuilders.com/sign-up';
+    const onAff = () => /^\/affiliates(\/|$)/.test(location.pathname);
+    const build = () => {
+      const b = document.createElement('div');
+      b.id = 'bb-aff-cta';
+      b.innerHTML =
+        '<div class="bb-aff-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>' +
+        '<div class="bb-aff-text"><div class="bb-aff-title">Become a BotBuilders affiliate</div>' +
+        '<div class="bb-aff-sub">Sign up to get your referral links and start earning commissions.</div></div>' +
+        '<a class="bb-aff-btn" target="_blank" rel="noopener noreferrer">Sign up</a>';
+      b.querySelector('.bb-aff-btn').href = SIGNUP_URL;
+      return b;
+    };
+    let queued = false;
+    const run = () => {
+      queued = false;
+      const existing = document.getElementById('bb-aff-cta');
+      if (!onAff()) { if (existing) existing.remove(); return; }
+      const tabs = document.querySelector('.affiliates-nav-tabs');
+      const host = tabs && tabs.parentElement;
+      if (!host) return;
+      const cta = existing || build();
+      if (cta.parentElement !== host || host.firstElementChild !== cta) host.insertBefore(cta, host.firstElementChild);
+    };
+    const schedule = () => { if (queued) return; queued = true; requestAnimationFrame(run); };
+    run();
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    setInterval(schedule, 600);
+    window.addEventListener('popstate', schedule);
+  })();
+</script>

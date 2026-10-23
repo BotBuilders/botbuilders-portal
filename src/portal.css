@@ -652,3 +652,81 @@ html:not([data-bb-course]) .sidebar-toggle-btn {
   background: #101828;
   transform: translateY(-50%) rotate(45deg);
 }
+
+/* ═══ 13. AFFILIATES — SIGN-UP BANNER ═══════════════════════════════════
+   Built by the affiliates block in portal.js above the Affiliates tabs.
+   ════════════════════════════════════════════════════════════════════ */
+
+#bb-aff-cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #c7d7fe;
+  border-left: 3px solid rgb(0, 78, 235);
+  border-radius: 10px;
+}
+#bb-aff-cta .bb-aff-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #eef4ff;
+  color: rgb(0, 78, 235);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#bb-aff-cta .bb-aff-icon svg {
+  width: 20px;
+  height: 20px;
+}
+#bb-aff-cta .bb-aff-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+#bb-aff-cta .bb-aff-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #101828;
+  line-height: 1.35;
+}
+#bb-aff-cta .bb-aff-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #667085;
+  line-height: 1.45;
+}
+#bb-aff-cta .bb-aff-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: rgb(0, 78, 235);
+  color: #fff !important;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+#bb-aff-cta .bb-aff-btn::after {
+  content: "\2197";       /* ↗ opens in a new tab */
+}
+#bb-aff-cta .bb-aff-btn:hover {
+  background: rgb(0, 62, 188);
+}
+@media (max-width: 640px) {
+  #bb-aff-cta {
+    flex-wrap: wrap;
+  }
+  #bb-aff-cta .bb-aff-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
