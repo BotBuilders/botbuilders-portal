@@ -402,7 +402,11 @@ a.postqueue-lesson.post-highlight .custom-word-break {
     /* Bob column 26% -> 30% (max 420 -> 460) so it's closer to the dashboard's
        width; the lesson column keeps a 560px floor so the video stays big —
        on narrower screens Bob gives the width back first (min 320px). */
-    grid-template-columns: clamp(210px, 19%, 336px) minmax(560px, 1fr) clamp(320px, min(30%, calc(100% - 336px - 560px)), 460px) !important;
+    /* Floors (180 + 460 + 320 = 960) fit the narrowest screen that gets this
+       layout (1025px wide minus the 48px icon rail). The old 210/560/320 floors
+       pushed Bob off-screen between 1025 and ~1150px; Bob itself needs ~300px
+       or its avatar stage pushes the message box out of view. */
+    grid-template-columns: clamp(180px, 19%, 336px) minmax(460px, 1fr) clamp(320px, min(30%, calc(100% - 336px - 460px)), 460px) !important;
   }
   .neue-template > .grid.grid-cols-12 > #category-list.side-panel {
     grid-column: 1 !important;
@@ -575,3 +579,21 @@ a.postqueue-lesson.post-highlight .custom-word-break {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(2px); }
 }
+
+/* ===== FULL-WIDTH LESSON CONTENT =====
+   The portal caps the lesson body (.post-details) at 600px, so on wide
+   screens the video and text stopped short with a blank strip on the right
+   of the card. Let it fill the card, and size embedded players (Vimeo etc.,
+   which ship a fixed height="400") by 16:9 so the video fills the width
+   instead of sitting between grey bars. */
+#bb-content-card .post-details {
+  max-width: none !important;
+  width: 100% !important;
+}
+#bb-content-card .embedded-media-player,
+#bb-content-card .embedded-media-player iframe {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+}
+
