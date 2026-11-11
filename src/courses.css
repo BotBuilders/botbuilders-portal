@@ -586,7 +586,11 @@ a.postqueue-lesson.post-highlight .custom-word-break {
    of the card. Let it fill the card, and size embedded players (Vimeo etc.,
    which ship a fixed height="400") by 16:9 so the video fills the width
    instead of sitting between grey bars. */
-#bb-content-card .post-details {
+#bb-content-card .post-details,
+#bb-content-card .post-description-container,
+#bb-content-card .post-body {
+  /* .post-details is capped at 600px; on lessons whose video is embedded in
+     the description, .post-body also gets a fixed width (588px) */
   max-width: none !important;
   width: 100% !important;
 }
