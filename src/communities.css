@@ -158,3 +158,14 @@ div:has(> div > #event-entry-fee-label) {
 #event-share-button {
   display: none !important;
 }
+
+/* 4c. "Price / Free" block next to the Register button (the portal's newer
+       popup design; #event-entry-fee-label above covers the older one).
+       Hide the block and keep Register on the right. */
+div:has(> #event-plan-price-label) {
+  display: none !important;
+}
+div:has(> div > #event-plan-price-label) {
+  justify-content: flex-end !important;
+}
+

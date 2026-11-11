@@ -137,9 +137,10 @@
            precisely because this function was already rewriting it every tick.
        Keyed by id, so it survives the class churn in the sidebar rebuild. */
     const NAV_LABELS = {
-      'cp-portal-sidebar-nav-courses':    'Courses',
+      'cp-portal-sidebar-nav-courses':    'Programs',
       'cp-portal-sidebar-nav-affiliates': 'Affiliates',
       'cp-portal-sidebar-nav-documents':  'File Share',
+      'cp-portal-sidebar-nav-events':     'Events',
       'cp-portal-sidebar-nav-loyalty':    'Loyalty',      // live portal only
     };
     /* Our injected items are plain <a>s, not Vue <router-link>s, so the portal
@@ -194,6 +195,8 @@
         const span = link.querySelector('span');
         if (span && span.textContent.trim() !== label) span.textContent = label;
       }
+      const crs = document.getElementById('cp-portal-sidebar-nav-courses');
+      if (crs && crs.getAttribute('aria-label') !== 'Programs') crs.setAttribute('aria-label', 'Programs');
       const docs = document.getElementById('cp-portal-sidebar-nav-documents');
       if (docs && docs.getAttribute('aria-label') === 'Shared files') docs.setAttribute('aria-label', 'File Share');
     }
@@ -523,7 +526,7 @@
         const h = document.createElement("h2");
         h.className = "hr-text hr-text-2xl hr-text-semibold text-700";
         // Heading spacing lives in the stylesheet: #bb-priority-courses h2
-        h.textContent = "Assigned Courses";
+        h.textContent = "Assigned Programs";
         const cnt = document.createElement("span"); cnt.className = "bb-pc-count"; cnt.hidden = true;
         head.appendChild(h); head.appendChild(cnt);
         panel.appendChild(head);
@@ -569,12 +572,12 @@
       if (!matched.length){
         const cnt0 = panel.querySelector('.bb-pc-count'); if (cnt0) cnt0.hidden = true;
         const p = document.createElement('div'); p.className = 'hr-text text-600';
-        p.textContent = 'No assigned courses yet.'; body.appendChild(p); return;
+        p.textContent = 'No assigned programs yet.'; body.appendChild(p); return;
       }
       const wrap = document.createElement('div'); wrap.className = 'bb-course-list-wrap';
       const list = document.createElement('div'); list.className = 'bb-course-list';
       const cnt = panel.querySelector('.bb-pc-count');
-      if (cnt){ cnt.textContent = matched.length + (matched.length === 1 ? ' course' : ' courses'); cnt.hidden = false; }
+      if (cnt){ cnt.textContent = matched.length + ' assigned'; cnt.hidden = false; }
       matched.forEach(c => {
         const card = document.createElement('div'); card.className = 'bb-course-card';
         card.dataset.link = c.link;
@@ -648,7 +651,7 @@
 </script>
 
 <script>
-  /* ────────── Keep the left menu expanded ──────────
+  /* ────────── Course-page marker (was: keep the left menu expanded) ──────────
      The portal collapses the sidebar two different ways:
        a) dashboard side  -> data-collapsible="icon" on the sidebar wrappers
        b) community side  -> .sidebar-collapsed on #cp-root-container, which
@@ -668,9 +671,9 @@
       queued = false;
       const course = onCourse();
       document.documentElement.toggleAttribute('data-bb-course', course);
-      if (course) return;
-      document.querySelectorAll('[data-collapsible="icon"]')
-        .forEach(el => el.setAttribute('data-collapsible', 'content'));
+      // No longer forces the menu open: the portal's own collapse button and
+      // automatic collapsing work as stock. Only the data-bb-course marker is
+      // kept (harmless; other rules may key off it).
     };
     const schedule = () => { if (queued) return; queued = true; requestAnimationFrame(force); };
     force();
@@ -694,16 +697,49 @@
     window.__bbCrumbInstalled = true;
 
     const HIDE = ['Courses', 'Communities'];
+    const PROGRAMS = 'My Programs';
+    const onLesson = () => /^\/courses\/products\//.test(location.pathname);
     let queued = false;
+
+    // Inside a course the "Courses" crumb is kept, renamed "My Programs", and
+    // takes you back to the programs list.
+    const goPrograms = (e) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault(); e.stopPropagation();
+      const el = document.querySelector('#__nuxt, #cp-root-container, #app, [data-v-app]');
+      const rt = el && el.__vue_app__ && el.__vue_app__.config.globalProperties.$router;
+      if (rt && rt.push) rt.push('/courses/my-courses'); else location.href = '/courses/my-courses';
+    };
 
     const run = () => {
       queued = false;
       document.querySelectorAll('#cp-topbar-breadcrumb li').forEach(li => {
         const link = li.querySelector('.hr-breadcrumb-item__link');
         if (!link) return;
+        const text = link.textContent.trim();
+        const last = li === li.parentElement.lastElementChild;
+        if (onLesson() && !last && (text === 'Courses' || text === PROGRAMS)){
+          if (text !== PROGRAMS) link.textContent = PROGRAMS;
+          li.style.display = '';
+          link.classList.add('bb-crumb-link');
+          // it's the last crumb shown on a course, so drop its trailing ">"
+          const sep = li.querySelector('.hr-breadcrumb-item__separator');
+          if (sep) sep.style.display = 'none';
+          if (!link.__bbProgramsWired){ link.__bbProgramsWired = true; link.addEventListener('click', goPrograms, true); }
+          return;
+        }
+        // On the programs list itself the current-page crumb reads "My courses"
+        // on a fresh load but "Courses" after arriving from a lesson.
+        if (last && /^\/courses\/my-courses/.test(location.pathname) && (text === 'Courses' || text === 'My courses')){
+          link.textContent = PROGRAMS; li.style.display = ''; return;
+        }
+        if (text === PROGRAMS && !onLesson() && !last){ link.textContent = 'Courses'; link.classList.remove('bb-crumb-link'); }
+        { const sep = li.querySelector('.hr-breadcrumb-item__separator'); if (sep && sep.style.display === 'none') sep.style.display = ''; }
+        // On a course the breadcrumb is just "Remy's Portal > My Programs" —
+        // the course name is already the big title under it.
+        if (onLesson() && last){ li.style.display = 'none'; return; }
         // never hide the last crumb — that's the page you're actually on
-        const hide = HIDE.includes(link.textContent.trim())
-                  && li !== li.parentElement.lastElementChild;
+        const hide = HIDE.includes(link.textContent.trim()) && !last;
         li.style.display = hide ? 'none' : '';
       });
     };
@@ -1075,6 +1111,18 @@
     window.addEventListener('scroll', hide, true);
     document.addEventListener('click', hide, true);
     window.addEventListener('popstate', hide);
+
+    // The portal's own hover label for the Courses item still says "Courses"
+    // (it reads the original name). Rename it to "Programs" as it appears.
+    let tq = false;
+    const renameTips = () => {
+      tq = false;
+      document.querySelectorAll('.cp-portal-sidebar__tooltip-content, .hr-tooltip__content').forEach(el => {
+        if (el.childElementCount === 0 && el.textContent.trim() === 'Courses') el.textContent = 'Programs';
+      });
+    };
+    new MutationObserver(() => { if (!tq) { tq = true; requestAnimationFrame(renameTips); } })
+      .observe(document.body, { childList: true, subtree: true, characterData: true });
   })();
 </script>
 
@@ -1115,5 +1163,33 @@
     new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
     setInterval(schedule, 600);
     window.addEventListener('popstate', schedule);
+  })();
+</script>
+
+<script>
+  /* ────────── "Programs" wording ──────────
+     The portal says "courses" in a few places we don't build ourselves:
+     the My courses breadcrumb + tab title, and the "Search courses..." box
+     (course list and lesson pages). Rewrite them as they render. */
+  (() => {
+    if (window.__bbProgramsWording) return;
+    window.__bbProgramsWording = true;
+    const SWAP = [[/^My courses$/i, 'My Programs'], [/^Search courses\.\.\.$/i, 'Search programs...']];
+    const swap = (txt) => { for (const [re, to] of SWAP) if (re.test(txt)) return to; return null; };
+    let q = false;
+    const run = () => {
+      q = false;
+      document.querySelectorAll('.hr-breadcrumb-item__link, .hr-input__placeholder span, .hr-input__placeholder').forEach(el => {
+        if (el.childElementCount) return;
+        const to = swap(el.textContent.trim());
+        if (to && el.textContent !== to) el.textContent = to;
+      });
+      document.querySelectorAll('input[placeholder]').forEach(i => { const to = swap(i.placeholder.trim()); if (to) i.placeholder = to; });
+      if (/^My courses\b/i.test(document.title)) document.title = document.title.replace(/^My courses/i, 'My Programs');
+    };
+    const schedule = () => { if (!q) { q = true; requestAnimationFrame(run); } };
+    run();
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(schedule).observe(document.querySelector('title') || document.head, { childList: true, subtree: true, characterData: true });
   })();
 </script>

@@ -62,7 +62,7 @@ try {(() => {
     if(!left){
       left=document.createElement('div');
       left.className='bb-course-left';
-      left.innerHTML = `<div class="eyebrow">Course</div><div class="cname"></div>`;
+      left.innerHTML = `<div class="eyebrow">Program</div><div class="cname"></div>`;
       bar.appendChild(left);
     }
     const cname=left.querySelector('.cname');
@@ -203,7 +203,7 @@ try {(() => {
   // the lesson grid (the portal rebuilds that when you change lessons/courses).
   // Instead: an empty #bb-bot-slot reserves the right column in the grid, and the
   // real bot (#bb-bot-host, attached to <body>) is pinned over that slot.
-  const BOT_HEIGHT = 0.6;   // bot height as a share of the screen height
+  const BOT_HEIGHT_PX = 800; // lesson-page Bob height; capped so it never runs past the screen bottom
 
   /* OWNERSHIP: the Bob host and the widget loader belong to the PORTAL-LEVEL
      custom JS. It parks a [data-bob-embed] box on <body> before widget.js
@@ -259,7 +259,7 @@ try {(() => {
     host.style.width=(r.width-PAD_RIGHT)+'px';
     // 60% of the screen height; only shrinks if that would run off the bottom
     const top=r.top+PAD_TOP, BOTTOM_GAP=24;
-    const h=Math.min(window.innerHeight*BOT_HEIGHT, window.innerHeight-top-BOTTOM_GAP);
+    const h=Math.min(BOT_HEIGHT_PX, window.innerHeight-top-BOTTOM_GAP);
     host.style.height=Math.max(240, Math.round(h))+'px';   // 240 = the widget's INLINE_MIN_HOST_PX
     // The widget stamps height:560px on an embed it finds shorter than 240px,
     // and this box is display:none for a moment while the lesson layout loads.

@@ -101,16 +101,15 @@
   align-items: stretch;
 }
 
-/* Top row 3:2 — Bob gets 40% (was 33%) and the continue-watching card
-   shrinks with it. The bottom row keeps its original 2:1
-   (Assigned Courses | Need Help). */
+/* Top row 2:1 with the same minimum as the bottom row, so "Pick up where
+   you left off" is exactly as wide as Assigned Programs below it. */
 #bb-top-row > #continue-watching-section-root {
-  flex: 3 1 0;
+  flex: 2 1 0;
   min-width: 0;
 }
 #bb-top-row > #bb-right-col {
-  flex: 2 1 0;
-  min-width: 320px;
+  flex: 1 1 0;
+  min-width: 280px;
 }
 
 /* `order` puts Need Help on the right while the JS still builds it first in
@@ -444,65 +443,40 @@
 }
 
 
-/* ═══ 7. SIDEBAR LOGO AS THE ACTIVE "DASHBOARD" ITEM ═══════════════════
-   #dashboard-page-root exists only on the dashboard, so this is a live DOM
-   check rather than a stored route — it survives SPA navigation with no JS.
+/* ═══ 7. SIDEBAR HEADER: BOTBUILDERS LOGO ════════════════════════════
+   Expanded menu: the horizontal BotBuilders logo replaces the portal's
+   square avatar + "BotBuilders Portal" text (both kept in place but
+   invisible, so the link keeps its size and click target). Collapsed menu
+   (data-collapsible="icon"): the portal's square logo only.
+   No highlight box behind it — it used to turn blue on the dashboard.
    ════════════════════════════════════════════════════════════════════ */
 
-body:has(#dashboard-page-root) .cp-portal-sidebar-header > a {
-  background-color: rgb(0, 78, 235);
-  color: #fff;
+.cp-portal-sidebar-header:not([data-collapsible="icon"]) > a {
+  background-image: url("https://files.leadconnectorhq.com/file/65661c052316654570e41917/botbuilders-logo-horizontal.png") !important;
+  background-repeat: no-repeat !important;
+  background-position: 10px center !important;
+  background-size: auto 38px !important;
+  background-color: transparent !important;
+  height: 56px !important;
 }
-body:has(#dashboard-page-root) .cp-portal-sidebar-header > a span {
-  color: #fff;
+.cp-portal-sidebar-header:not([data-collapsible="icon"]) > a > * {
+  visibility: hidden;
+}
+.cp-portal-sidebar-header > a,
+.cp-portal-sidebar-header > a.router-link-active,
+.cp-portal-sidebar-header > a.router-link-exact-active {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+.cp-portal-sidebar-header > a:hover {
+  background-color: var(--sidebar-hover, #f3f4f6) !important;
 }
 
 
-/* ═══ 8. LEFT MENU ALWAYS EXPANDED ═════════════════════════════════════
-   The portal drives the sidebar width from --cp-sidebar-width (16rem open /
-   3rem collapsed). On community and course pages it also adds
-   .sidebar-collapsed + .switcher-sidebar-mode to #cp-root-container.
-   Pinning the variable in every one of those states is what keeps it open.
+/* ═══ 8. LEFT MENU ═════════════════════════════════════════════════════
+   (Removed: the rules that hid the collapse button and pinned the menu at
+   16rem. The menu now collapses and expands like the stock portal.)
    ════════════════════════════════════════════════════════════════════ */
-
-/* Every rule here is scoped to html:not([data-bb-course]). The JS sets
-   data-bb-course on /courses/products/* so the portal's own icon rail survives
-   there — a course already has its own module menu, and two full menus side by
-   side is the confusing part. The toggle button comes back on those pages too,
-   so the menu can still be opened by hand. */
-html:not([data-bb-course]) .sidebar-toggle-btn {
-  display: none !important;
-}
-
-@media (min-width: 768px) {
-  /* :not(.auth-page) matters — the login/signup screen reuses
-     #cp-root-container with NO sidebar child, so forcing a 16rem first column
-     squeezed the whole sign-in card into 256px with 1704px of empty blue
-     beside it. */
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page),
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page).sidebar-collapsed,
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page).switcher-sidebar-mode,
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page).sidebar-collapsed.switcher-sidebar-mode {
-    --cp-sidebar-width: 16rem !important;
-    grid-template-columns: 16rem 1fr !important;
-  }
-
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page) > .cp-sidebar {
-    width: 16rem !important;
-    min-width: 16rem !important;
-  }
-
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page) .cp-sidebar > aside {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  /* no width animation on route change, so it never flashes narrow */
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page),
-  html:not([data-bb-course]) #cp-root-container:not(.auth-page) .cp-sidebar > aside {
-    transition: none !important;
-  }
-}
 
 
 /* ═══ 9. SMALL SCREENS ═════════════════════════════════════════════════
@@ -728,5 +702,40 @@ html:not([data-bb-course]) .sidebar-toggle-btn {
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ═══ 15. LEFT MENU TEXT SIZE ══════════════════════════════════════════
+   Applied to the label AND anything inside it: items the portal renders
+   untouched (Affiliates) keep an inner hr-text-lg span that set 14px/500,
+   while items our label fixer rewrote lost it (15.5px/400). One size and
+   one weight for all. */
+.app-sidebar-nav-item__label,
+.app-sidebar-nav-item__label * {
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* ═══ 16. COMPACT NEED HELP · HIDDEN EVENTS · PROGRAMS CRUMB ═══════════ */
+
+/* hide the portal's Events menu item and its dashboard "Ongoing events" */
+.app-sidebar-nav-item:has(> #cp-portal-sidebar-nav-events),
+.app-sidebar-nav-item:has(a[href="/events"]),
+#dashboard-live-events-section {
+  display: none !important;
+}
+
+/* "My Programs" crumb on course pages: clickable back to the list */
+#cp-topbar-breadcrumb .bb-crumb-link {
+  cursor: pointer;
+}
+#cp-topbar-breadcrumb .bb-crumb-link:hover {
+  color: rgb(0, 78, 235);
+  text-decoration: underline;
+}
+
+/* Automator AI in its own group, with the same gap the portal leaves
+   between its menu groups (Programs · Calendar · Contact | Automator AI) */
+#custom-menu-automator {
+  margin-top: 16px;
 }
 
