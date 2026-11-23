@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.22 · 2026-11-12';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.22 · 2026-11-12' });
+window.BB_VERSION = '1.0.22 · 2026-11-24';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.22 · 2026-11-24' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.22/dist';
 /* botbuilders-portal · portal.js · built from src/portal.js (10 script blocks) */
 
@@ -158,12 +158,13 @@ window.__bbPortalRan = true;
     const NAV_ACTIVE_PATHS = {
       'custom-menu-calendar-link': /^\/communities\/groups\/(support|services)\/events/,
       'custom-menu-contact-link':  /^\/communities\/groups\/(support|services)\/about/,
+      'custom-menu-roadmap-link':  () => onRoadmap(),
     };
     function markActiveNav(){
       for (const [id, re] of Object.entries(NAV_ACTIVE_PATHS)){
         const a = document.getElementById(id);
         if (!a) continue;
-        const on = re.test(location.pathname);
+        const on = typeof re === 'function' ? re() : re.test(location.pathname);
         a.classList.toggle('bg-primary', on);
         a.classList.toggle('text-on-primary', on);
       }
@@ -175,6 +176,7 @@ window.__bbPortalRan = true;
        current path off a portal-owned icon instead, and re-assert it on every
        tick so a later re-render can't leave ours pointing at a dead file. */
     const CUSTOM_ICONS = {
+      'custom-menu-roadmap':   'contracts',
       'custom-menu-calendar':  'appointments',
       'custom-menu-contact':   'explore',
       'custom-menu-automator': 'studio',
@@ -245,6 +247,16 @@ window.__bbPortalRan = true;
       }
       // Calendar is duplicate-safe: skipped if your other custom-JS already adds it.
       const grp = '/communities/groups/' + SUPPORT_GROUP;
+      // Roadmap: only for contacts whose roadmap-link field holds a valid URL.
+      // Kept directly under Programs, since it can appear after the others.
+      if (roadmapLink()){
+        add('Roadmap', domain + ROADMAP_PATH, 'custom-menu-roadmap', 'contracts', false, ROADMAP_PATH);
+        const rli = document.getElementById('custom-menu-roadmap');
+        if (rli && item.nextElementSibling !== rli) item.after(rli);
+      } else {
+        const rli = document.getElementById('custom-menu-roadmap');
+        if (rli) rli.remove();
+      }
       add('Calendar', domain + grp + '/events', 'custom-menu-calendar', 'appointments', false, grp + '/events');
       add('Contact',  domain + grp + '/about',  'custom-menu-contact',  'explore',      false, grp + '/about');
       add('Automator AI', 'https://app.automator.ai', 'custom-menu-automator', 'studio', true);
@@ -263,6 +275,16 @@ window.__bbPortalRan = true;
     const BILLING_RESET_FIELD_ID = "UNJyx3fzPSZDtSvvQQI8";
     const CREDITS_FIELD_ID       = "T1otPJDLzM2KPuVBqpjU";
     const HELP_BLURB  = "Have a question or need assistance? Reach out to our Inner Circle support team and we'll get back to you as soon as possible.";
+    /* Roadmap page. Unknown portal routes bounce to /dashboard, so the page
+       lives at /dashboard?view=roadmap: the dashboard content is hidden and
+       the contact's roadmap is iframed full-size in its place (portal.css).
+       The link is per contact (ROADMAP_FIELD_ID). The Roadmap menu and the
+       page only exist when it holds a valid http(s) URL; otherwise
+       /dashboard?view=roadmap falls back to the dashboard.
+       roadmaps.botbuilders.com only allows framing from portal.botbuilders.com
+       (CSP frame-ancestors), so it shows blank on the test portal. */
+    const ROADMAP_PATH     = "/dashboard?view=roadmap";
+    const ROADMAP_FIELD_ID = "Fl8KPXGdCfDi1zEHXfk8";
     const IDENTITY_TIMEOUT_MS = 15000;   // give up waiting for hydration after this
     /* ────────── Bob inline embed ──────────
        The widget (https://selfhelp.ai/widget.js) mounts itself into the first
@@ -287,6 +309,42 @@ window.__bbPortalRan = true;
     const BOB_EMBED_HEIGHT = "600px";    // parked size + the CSS floor. Not the rendered height.
     const BOB_PARK_STYLE   = "position:absolute;left:-10000px;top:0;width:400px;height:" + BOB_EMBED_HEIGHT + ";";
     const onDashboard = () => location.pathname.replace(/\/+$/, "") === "/dashboard";
+    const onRoadmap   = () => onDashboard() && new URLSearchParams(location.search).get("view") === "roadmap";
+    function roadmapLink(){
+      const v = (state && state.roadmapUrl) || "";
+      if (!v) return "";
+      try {
+        const u = new URL(v);
+        return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.includes(".") ? u.href : "";
+      } catch (e){ return ""; }
+    }
+    function syncRoadmapView(){
+      let on = onRoadmap();
+      // No valid link for this contact: leave the roadmap URL for the dashboard.
+      if (on && state.loaded && !roadmapLink()){
+        on = false;
+        const rt = getRouter();
+        if (rt && rt.replace) rt.replace("/dashboard");
+      }
+      if (document.documentElement.hasAttribute("data-bb-roadmap") !== on)
+        document.documentElement.toggleAttribute("data-bb-roadmap", on);
+      let wrap = document.getElementById("bb-roadmap-view");
+      if (!on){ if (wrap) wrap.remove(); return; }
+      const inner = document.querySelector(".cp-main-content-inner");
+      if (!inner) return;
+      if (!wrap){
+        wrap = document.createElement("div"); wrap.id = "bb-roadmap-view";
+        const f = document.createElement("iframe");
+        f.title = "Roadmap";
+        f.setAttribute("allow", "clipboard-write");
+        wrap.appendChild(f);
+      }
+      if (wrap.parentElement !== inner) inner.insertBefore(wrap, inner.firstChild);
+      const src = roadmapLink();
+      const f = wrap.firstChild;
+      if (!src) return;                  // still loading the contact's fields
+      if (f.getAttribute("src") !== src) f.setAttribute("src", src);
+    }
     /* Lesson pages embed Bob too — the course-level custom JS positions it, but
        the HOST and the loader are owned here, because the widget looks for its
        host once at init and the course box can't reliably beat it. */
@@ -373,6 +431,7 @@ window.__bbPortalRan = true;
       courseNames:[], tags:[],
       profileEmail:"", firstName:"", lastName:"",
       billingResetDate:"", creditsAvailable:"",
+      roadmapUrl:"",
     };
     function extractRoot(d){
       if (Array.isArray(d)) return d[0] || {};
@@ -386,7 +445,7 @@ window.__bbPortalRan = true;
     }
     async function fetchPortalData(){
       const { email, contactId } = getIdentity();
-      const empty = { courseNames:[], tags:[], profileEmail: email || "", firstName:"", lastName:"", billingResetDate:"", creditsAvailable:"" };
+      const empty = { courseNames:[], tags:[], profileEmail: email || "", firstName:"", lastName:"", billingResetDate:"", creditsAvailable:"", roadmapUrl:"" };
       if (!contactId && !email) return empty;
       const res = await fetch(API_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email, contact_id: contactId }) });
       if (!res.ok) return empty;
@@ -403,6 +462,7 @@ window.__bbPortalRan = true;
         lastName:  typeof root.last_name  === "string" ? root.last_name.trim()  : "",
         billingResetDate: fieldValue(fields, BILLING_RESET_FIELD_ID),
         creditsAvailable: fieldValue(fields, CREDITS_FIELD_ID),
+        roadmapUrl: fieldValue(fields, ROADMAP_FIELD_ID),
       };
     }
     async function ensureFetched(){
@@ -618,7 +678,7 @@ window.__bbPortalRan = true;
       }
     }
     /* ────────── run: non-blocking startup ────────── */
-    const updateAll = debounceRaf(() => { buildMenu(); fixNavLabels(); fixNavIcons(); markActiveNav(); injectCourses(); });
+    const updateAll = debounceRaf(() => { buildMenu(); fixNavLabels(); fixNavIcons(); markActiveNav(); injectCourses(); syncRoadmapView(); });
 
     // Identity arrives asynchronously. Fetch the moment it appears, and
     // re-fetch if it ever changes (account switch, re-login).

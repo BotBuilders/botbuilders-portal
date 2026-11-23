@@ -1,4 +1,4 @@
-/* BB_VERSION 1.0.22 · 2026-11-12 · botbuilders-portal · portal.css */
+/* BB_VERSION 1.0.22 · 2026-11-24 · botbuilders-portal · portal.css */
 
 /* ═══════════════════════════════════════════════════════════════════════
    BOTBUILDERS PORTAL — CUSTOM CSS
@@ -439,6 +439,7 @@
    The icon inherits via currentColor, so the link alone is enough.
    ════════════════════════════════════════════════════════════════════ */
 
+#custom-menu-roadmap-link.bg-primary,
 #custom-menu-calendar-link.bg-primary,
 #custom-menu-contact-link.bg-primary {
   color: #fff !important;
@@ -739,4 +740,33 @@
    between its menu groups (Programs · Calendar · Contact | Automator AI) */
 #custom-menu-automator {
   margin-top: 16px;
+}
+
+
+/* ═══ ROADMAP PAGE (/dashboard?view=roadmap) ═══════════════════════════
+   portal.js sets data-bb-roadmap on <html>, hides the dashboard content and
+   fills the portal's scroll area with the contact's roadmap iframe —
+   whatever the header height or browser size. */
+
+html[data-bb-roadmap] .cp-main-content-inner > :not(#bb-roadmap-view) {
+  display: none !important;
+}
+html[data-bb-roadmap] .cp-main-content {
+  overflow: hidden !important;
+}
+html[data-bb-roadmap] .cp-main-content-inner {
+  padding: 0 !important;
+  height: 100%;
+  max-width: none !important;
+}
+#bb-roadmap-view {
+  height: 100%;
+  width: 100%;
+}
+#bb-roadmap-view > iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
 }

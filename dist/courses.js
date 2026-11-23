@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.22 · 2026-11-12';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.22 · 2026-11-12' });
+window.BB_VERSION = '1.0.22 · 2026-11-24';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { courses: '1.0.22 · 2026-11-24' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.22/dist';
 /* botbuilders-portal · courses.js · built from src/courses.js (1 script block) */
 
