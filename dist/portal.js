@@ -1,6 +1,6 @@
-window.BB_VERSION = '1.0.22 · 2026-11-24';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.22 · 2026-11-24' });
-window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.22/dist';
+window.BB_VERSION = '1.0.23 · 2026-11-24';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { portal: '1.0.23 · 2026-11-24' });
+window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.23/dist';
 /* botbuilders-portal · portal.js · built from src/portal.js (10 script blocks) */
 
 if (!window.__bbPortalRan) {
