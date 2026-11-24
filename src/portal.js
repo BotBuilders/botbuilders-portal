@@ -150,12 +150,13 @@
     const NAV_ACTIVE_PATHS = {
       'custom-menu-calendar-link': /^\/communities\/groups\/(support|services)\/events/,
       'custom-menu-contact-link':  /^\/communities\/groups\/(support|services)\/about/,
+      'custom-menu-roadmap-link':  () => onRoadmap(),
     };
     function markActiveNav(){
       for (const [id, re] of Object.entries(NAV_ACTIVE_PATHS)){
         const a = document.getElementById(id);
         if (!a) continue;
-        const on = re.test(location.pathname);
+        const on = typeof re === 'function' ? re() : re.test(location.pathname);
         a.classList.toggle('bg-primary', on);
         a.classList.toggle('text-on-primary', on);
       }
@@ -167,6 +168,7 @@
        current path off a portal-owned icon instead, and re-assert it on every
        tick so a later re-render can't leave ours pointing at a dead file. */
     const CUSTOM_ICONS = {
+      'custom-menu-roadmap':   'contracts',
       'custom-menu-calendar':  'appointments',
       'custom-menu-contact':   'explore',
       'custom-menu-automator': 'studio',
@@ -237,6 +239,16 @@
       }
       // Calendar is duplicate-safe: skipped if your other custom-JS already adds it.
       const grp = '/communities/groups/' + SUPPORT_GROUP;
+      // Roadmap: only for contacts whose roadmap-link field holds a valid URL.
+      // Kept directly under Programs, since it can appear after the others.
+      if (roadmapLink()){
+        add('Roadmap', domain + ROADMAP_PATH, 'custom-menu-roadmap', 'contracts', false, ROADMAP_PATH);
+        const rli = document.getElementById('custom-menu-roadmap');
+        if (rli && item.nextElementSibling !== rli) item.after(rli);
+      } else {
+        const rli = document.getElementById('custom-menu-roadmap');
+        if (rli) rli.remove();
+      }
       add('Calendar', domain + grp + '/events', 'custom-menu-calendar', 'appointments', false, grp + '/events');
       add('Contact',  domain + grp + '/about',  'custom-menu-contact',  'explore',      false, grp + '/about');
       add('Automator AI', 'https://app.automator.ai', 'custom-menu-automator', 'studio', true);
@@ -256,6 +268,46 @@
     const CREDITS_FIELD_ID       = "T1otPJDLzM2KPuVBqpjU";
     const HELP_BLURB  = "Have a question or need assistance? Reach out to our Inner Circle support team and we'll get back to you as soon as possible.";
     const IDENTITY_TIMEOUT_MS = 15000;   // give up waiting for hydration after this
+    /* ────────── Accelerator box ──────────
+       Sits under "Pick up where you left off". Every value comes from contact
+       custom fields returned by the same webhook. IDs are blank until the
+       fields are confirmed — a blank ID simply reads as "no value".
+       For previews, window.BB_ACCEL_SAMPLE = { systemsDone, systemsTotal,
+       roadmapStart, projectedEnd, mitName, mitUrl, roadmapUrl } bypasses the
+       webhook and the tag gate. Never set on the live portal. */
+    /* Roadmap page. Unknown portal routes bounce to /dashboard, so the page
+       lives at /dashboard?view=roadmap: the dashboard content is hidden and
+       the roadmap is iframed full-size in its place (portal.css §6d).
+       roadmaps.botbuilders.com only allows framing from portal.botbuilders.com
+       (CSP frame-ancestors), so it shows blank on the test portal.
+       The link is per contact (ACCEL_FIELDS.roadmapUrl). The Roadmap menu,
+       the page and "View details" only exist when it holds a valid http(s)
+       URL; otherwise /dashboard?view=roadmap falls back to the dashboard. */
+    const ROADMAP_PATH = "/dashboard?view=roadmap";
+    // "View details" opens the roadmap at its "Your Build" section (#yours),
+    // where the current MIT is the highlighted "YOUR MIT · START HERE" task
+    // with its tool and starting prompt. (#mitbox, the summary at the end of
+    // that section, ends up under the roadmap's sticky header.)
+    const ROADMAP_MIT_PATH = ROADMAP_PATH + "&at=mit";
+    const ROADMAP_MIT_ANCHOR = "yours";
+    // Empty = no tag gate: the box shows for anyone whose fields below have
+    // values. Add a tag (e.g. "accelerator - active") to also require it.
+    const ACCEL_TAGS = [];
+    const ACCEL_FIELDS = {
+      systemsDone:  "eaIWVQFDpFDmuIG8ScvB",   // systems built
+      systemsTotal: "SfcXZ8sw1ekL8yG1sZkl",   // total systems
+      roadmapStart: "L2RgI2SnzEvxb1adJLxj",   // start date
+      projectedEnd: "XM6C0h2Y4k5mGEzsc4y3",   // end date
+      mitName:      "va9piIjpZkFyRbIxW2bP",   // current MIT
+      mitUrl:       "",
+      roadmapUrl:   "Fl8KPXGdCfDi1zEHXfk8",
+    };
+    const ACCEL_LOGO_URL = "https://files.leadconnectorhq.com/file/6afe34fc8140edeb93cf1e9a/training-botbuilders-accelerator-logo.webp";
+    const ACCEL_TIPS = {
+      systems:    "Estimates what percent of systems defined on your roadmap we have finished building. All work will be quality checked and is open to your feedback.",
+      consulting: "Estimates how much of your 12 weeks have been utilized. It begins after your roadmap is created and does have some flexibility to ensure you are supported.",
+      mit:        "Based on conversations with your consultant, this is your Most Important Thing to be working on. Click link to get recommended training and tools in roadmap.",
+    };
     /* ────────── Bob inline embed ──────────
        The widget (https://selfhelp.ai/widget.js) mounts itself into the first
        element matching "[data-bob-embed], #bob-embed". It looks for that host
@@ -265,17 +317,16 @@
        rendered, which is far too late.
        So: create the host immediately (this block is an inline <script>, so it
        runs long before the async widget.js finishes downloading), parked
-       off-screen on <body>, then move it into #bb-right-col once the shell is
+       off-screen on <body>, then move it into #bb-bob-box once the shell is
        built. Moving a mounted host is safe — the panel is plain divs, no iframe.
        Host must be >= 240px (INLINE_MIN_HOST_PX); widget defaults to 560px.
 
        SIZING IS NOT DONE HERE. The parking style below is inline only because
        it has to beat widget.js to the punch. Once the host is placed, the
        inline style is REMOVED so the stylesheet owns the size:
-         #bb-right-col                    { position: relative; min-height: 600px }
-         #bb-right-col > [data-bob-embed] { position: absolute; inset: 0 }
-       A fixed inline height here would pin the panel to that number and leave
-       dead space whenever the left "continue watching" card is taller. */
+         #bb-bob-box                    { position: relative; height: 600px }
+         #bb-bob-box > [data-bob-embed] { position: absolute; inset: 0 }
+       The box sits at the top of #bb-right-col (the rail beside the bands). */
     const BOB_EMBED_HEIGHT = "600px";    // parked size + the CSS floor. Not the rendered height.
     const BOB_PARK_STYLE   = "position:absolute;left:-10000px;top:0;width:400px;height:" + BOB_EMBED_HEIGHT + ";";
     const onDashboard = () => location.pathname.replace(/\/+$/, "") === "/dashboard";
@@ -284,6 +335,45 @@
        host once at init and the course box can't reliably beat it. */
     const onLesson    = () => /^\/courses\/products\//.test(location.pathname);
     const needsBob    = () => onDashboard() || onLesson();
+    const onRoadmap   = () => onDashboard() && new URLSearchParams(location.search).get("view") === "roadmap";
+    function roadmapLink(){
+      const v = (state.accel && state.accel.roadmapUrl) || "";
+      if (!v) return "";
+      try {
+        const u = new URL(v);
+        return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.includes(".") ? u.href : "";
+      } catch (e){ return ""; }
+    }
+    function syncRoadmapView(){
+      let on = onRoadmap();
+      // No valid link for this contact: leave the roadmap URL for the dashboard.
+      if (on && state.loaded && !roadmapLink()){
+        on = false;
+        const rt = getRouter();
+        if (rt && rt.replace) rt.replace("/dashboard");
+      }
+      if (document.documentElement.hasAttribute("data-bb-roadmap") !== on)
+        document.documentElement.toggleAttribute("data-bb-roadmap", on);
+      let wrap = document.getElementById("bb-roadmap-view");
+      if (!on){ if (wrap) wrap.remove(); return; }
+      const inner = document.querySelector(".cp-main-content-inner");
+      if (!inner) return;
+      if (!wrap){
+        wrap = document.createElement("div"); wrap.id = "bb-roadmap-view";
+        const f = document.createElement("iframe");
+        f.title = "Roadmap";
+        f.setAttribute("allow", "clipboard-write");
+        wrap.appendChild(f);
+      }
+      if (wrap.parentElement !== inner) inner.insertBefore(wrap, inner.firstChild);
+      let src = roadmapLink();
+      const f = wrap.firstChild;
+      if (!src) return;                  // still loading the contact's fields
+      if (new URLSearchParams(location.search).get("at") === "mit"){
+        const u = new URL(src); u.hash = ROADMAP_MIT_ANCHOR; src = u.href;
+      }
+      if (f.getAttribute("src") !== src) f.setAttribute("src", src);
+    }
     let bobCol  = null;                  // cached #bb-right-col node (survives re-renders)
     let bobHost = null;                  // cached [data-bob-embed] node (keeps Bob mounted)
 
@@ -365,6 +455,7 @@
       courseNames:[], tags:[],
       profileEmail:"", firstName:"", lastName:"",
       billingResetDate:"", creditsAvailable:"",
+      accel:{},
     };
     function extractRoot(d){
       if (Array.isArray(d)) return d[0] || {};
@@ -395,6 +486,7 @@
         lastName:  typeof root.last_name  === "string" ? root.last_name.trim()  : "",
         billingResetDate: fieldValue(fields, BILLING_RESET_FIELD_ID),
         creditsAvailable: fieldValue(fields, CREDITS_FIELD_ID),
+        accel: Object.fromEntries(Object.entries(ACCEL_FIELDS).map(([k, id]) => [k, id ? fieldValue(fields, id) : ""])),
       };
     }
     async function ensureFetched(){
@@ -421,34 +513,24 @@
       helpCol.setAttribute("data-sig", sig);
       helpCol.innerHTML = "";
 
+      // Left: Need Help.  Right: Inner Circle (minutes + billing), only when
+      // those custom fields have values. Both share the tag gate above.
       const card = document.createElement("section");
       card.id = "bb-help-card";
-      card.className = "rounded-xl bg-background p-4 border border-solid border-default shadow-sm";
-
+      const top = document.createElement("div");
+      top.className = "bb-help-top";
+      const icon = document.createElement("div");
+      icon.className = "bb-help-icon";
+      icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>';
+      top.appendChild(icon);
       const h = document.createElement("h2");
-      h.className = "hr-text hr-text-2xl hr-text-semibold text-700";
       h.textContent = "Need Help?";
-      card.appendChild(h);
-
+      top.appendChild(h);
+      card.appendChild(top);
       const body = document.createElement("p");
-      body.className = "bb-help-body hr-text text-600";
+      body.className = "bb-help-body";
       body.textContent = HELP_BLURB;
       card.appendChild(body);
-
-      // Stat tiles only render when the location actually has those fields.
-      if (state.billingResetDate || state.creditsAvailable){
-        const stats = document.createElement("div");
-        stats.className = "bb-help-stats";
-        const tile = (label, value) => {
-          const t = document.createElement("div"); t.className = "bb-help-stat";
-          const l = document.createElement("div"); l.className = "bb-help-stat-label"; l.textContent = label;
-          const v = document.createElement("div"); v.className = "bb-help-stat-value"; v.textContent = value;
-          t.appendChild(l); t.appendChild(v); return t;
-        };
-        if (state.billingResetDate) stats.appendChild(tile("Billing Reset Date", state.billingResetDate));
-        if (state.creditsAvailable) stats.appendChild(tile("Minutes Available", state.creditsAvailable));
-        card.appendChild(stats);
-      }
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -463,21 +545,328 @@
         window.open(qs ? HELP_URL + "?" + qs : HELP_URL, "_blank", "noopener,noreferrer");
       });
       card.appendChild(btn);
-
       helpCol.appendChild(card);
+
+      if (state.billingResetDate || state.creditsAvailable){
+        const plan = document.createElement("section");
+        plan.id = "bb-plan-card";
+        const pt = document.createElement("div");
+        pt.className = "bb-plan-title";
+        pt.textContent = "Inner Circle";
+        plan.appendChild(pt);
+        const tiles = document.createElement("div");
+        tiles.className = "bb-plan-tiles";
+        const tile = (label, value, unit) => {
+          const t = document.createElement("div"); t.className = "bb-plan-tile";
+          const l = document.createElement("div"); l.className = "bb-plan-label"; l.textContent = label;
+          const v = document.createElement("div"); v.className = "bb-plan-value"; v.textContent = value;
+          if (unit){ const u = document.createElement("span"); u.className = "bb-plan-unit"; u.textContent = " " + unit; v.appendChild(u); }
+          t.appendChild(l); t.appendChild(v); return t;
+        };
+        if (state.creditsAvailable){
+          const numeric = /^\d[\d,.]*$/.test(state.creditsAvailable);
+          tiles.appendChild(tile("Minutes available", state.creditsAvailable, numeric ? "min" : ""));
+        }
+        if (state.billingResetDate) tiles.appendChild(tile("Billing resets", state.billingResetDate, ""));
+        plan.appendChild(tiles);
+        helpCol.appendChild(plan);
+      }
+    }
+    /* Dates may arrive as "Aug 27, 2026", "2026-08-27" or a ms timestamp. */
+    function parseDate(v){
+      if (!v) return null;
+      if (/^\d{10,13}$/.test(v)) return new Date(Number(v.length === 10 ? v + "000" : v));
+      const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(v) ? v + "T00:00:00" : v);
+      return isNaN(d) ? null : d;
+    }
+    function accelData(){
+      const sample = window.BB_ACCEL_SAMPLE;
+      if (sample && typeof sample === "object") return { a: sample, allowed: true };
+      const have = new Set((state.tags || []).map(normalizeText));
+      return { a: state.accel || {}, allowed: !ACCEL_TAGS.length || ACCEL_TAGS.some(t => have.has(normalizeText(t))) };
+    }
+    function renderAccel(box){
+      if (!state.loaded && !window.BB_ACCEL_SAMPLE) return;
+      const { a, allowed } = accelData();
+      const done = parseFloat(a.systemsDone), total = parseFloat(a.systemsTotal);
+      const start = parseDate(a.roadmapStart), end = parseDate(a.projectedEnd);
+      const hasAny = (total > 0) || (start && end) || a.mitName;
+      if (!allowed || !hasAny){ box.hidden = true; box.innerHTML = ""; box.removeAttribute("data-sig"); return; }
+      box.hidden = false;
+      const sig = JSON.stringify(a) + "|" + roadmapLink() + "|" + spriteBase() + "|" + new Date().toDateString();
+      if (box.getAttribute("data-sig") === sig) return;
+      box.setAttribute("data-sig", sig);
+      box.innerHTML = "";
+      const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+      // Head: logo + action buttons
+      const head = el("div", "bb-acc-head");
+      if (ACCEL_LOGO_URL){
+        const img = el("img", "bb-acc-logo"); img.src = ACCEL_LOGO_URL; img.alt = "Accelerator"; head.appendChild(img);
+      } else {
+        head.appendChild(el("div", "bb-acc-wordmark", "Accelerator"));
+      }
+      const acts = el("div", "bb-acc-actions");
+      const action = (label, href, external, icon) => {
+        const b = el("a", "bb-acc-btn");
+        b.href = href;
+        b.innerHTML = icon;
+        b.appendChild(document.createTextNode(label));
+        if (external){ b.target = "_blank"; b.rel = "noopener noreferrer"; }
+        else b.addEventListener("click", e => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+          const rt = getRouter();
+          if (rt && rt.push){ e.preventDefault(); rt.push(href); }
+        });
+        return b;
+      };
+      const ICON_MAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>';
+      const ICON_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>';
+      // Roadmap button hidden for now (the sidebar has a Roadmap item) — re-add with:
+      // acts.appendChild(action("Roadmap", ROADMAP_PATH, false, ICON_MAP));
+      // Calendar button held back for now — re-add with:
+      // acts.appendChild(action("Calendar", "/communities/groups/" + SUPPORT_GROUP + "/events", false, ICON_CAL));
+      if (acts.childElementCount) head.appendChild(acts);
+      box.appendChild(head);
+
+      // Label with hover/focus tooltip on the icon + bold name
+      // Icons come from the portal's own sidebar sprite, so they match the menu.
+      const label = (icon, name, tip) => {
+        const l = el("div", "bb-acc-label");
+        l.tabIndex = 0;
+        const ic = el("span", "bb-acc-ico");
+        ic.innerHTML = '<svg aria-hidden="true"><use href="' + spriteBase() + '#' + icon + '"/></svg>';
+        l.appendChild(ic);
+        l.appendChild(el("strong", "", name));
+        const t = el("span", "bb-acc-tip", tip);
+        t.setAttribute("role", "tooltip");
+        l.appendChild(t);
+        return l;
+      };
+      const bar = (pct, tone) => {
+        const b = el("div", "bb-acc-bar" + (tone ? " bb-acc-bar--" + tone : ""));
+        b.setAttribute("role", "progressbar");
+        b.setAttribute("aria-valuemin", "0"); b.setAttribute("aria-valuemax", "100");
+        b.setAttribute("aria-valuenow", String(Math.round(pct)));
+        const f = el("span"); f.style.width = Math.max(0, Math.min(100, pct)) + "%";
+        b.appendChild(f); return b;
+      };
+      const grid = el("div", "bb-acc-grid");
+
+      if (total > 0){
+        const pct = Math.min(100, (done || 0) / total * 100);
+        const c = el("div", "bb-acc-item");
+        const top = el("div", "bb-acc-row"); top.appendChild(label("dashboard", "Systems Progress", ACCEL_TIPS.systems));
+        top.appendChild(el("span", "bb-acc-pct", Math.round(pct) + "%")); c.appendChild(top);
+        c.appendChild(bar(pct));
+        c.appendChild(el("div", "bb-acc-cap", (done || 0) + " of " + total + " systems built"));
+        grid.appendChild(c);
+      }
+      if (start && end && end > start){
+        const DAY = 864e5, now = Date.now();
+        const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100));
+        const left = Math.max(0, Math.ceil((end - now) / (7 * DAY)));
+        const c = el("div", "bb-acc-item");
+        const top = el("div", "bb-acc-row"); top.appendChild(label("appointments", "Consulting Status", ACCEL_TIPS.consulting));
+        top.appendChild(el("span", "bb-acc-pct", Math.round(pct) + "%")); c.appendChild(top);
+        c.appendChild(bar(pct));
+        const endTxt = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+        c.appendChild(el("div", "bb-acc-cap", (left ? left + (left === 1 ? " week" : " weeks") + " left" : "Completed") + " · ends " + endTxt));
+        grid.appendChild(c);
+      }
+      if (a.mitName){
+        const c = el("div", "bb-acc-item bb-acc-item--mit");
+        const top = el("div", "bb-acc-row"); top.appendChild(label("loyalty", "Your Current MIT", ACCEL_TIPS.mit)); c.appendChild(top);
+        c.appendChild(el("div", "bb-acc-mit", a.mitName));
+        if (roadmapLink()){
+          const v = el("a", "bb-acc-more", "View details");
+          v.href = ROADMAP_MIT_PATH;
+          v.addEventListener("click", e => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            const rt = getRouter();
+            if (rt && rt.push){ e.preventDefault(); rt.push(ROADMAP_MIT_PATH); }
+          });
+          v.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>');
+          c.appendChild(v);
+        }
+        grid.appendChild(c);
+      }
+      box.appendChild(grid);
+    }
+    /* ────────── Upcoming events (dashboard, under Bob) ──────────
+       Same request the Calendar page uses for its "Upcoming Events" list, so
+       the two always match. Clicking one opens the Calendar page and clicks
+       that event in its list, which opens the portal's own popup (Register
+       button included). The group id is looked up from SUPPORT_GROUP once. */
+    const EVENTS_LIMIT = 6;
+    const EVENTS_PATH = "/communities/groups/" + SUPPORT_GROUP + "/events";
+    const EVENT_OPEN_KEY = "bb-open-event";
+    const evt = { list: null, loading: false, at: 0 };
+    function lcHeaders(tok, loc, extra){
+      return Object.assign({ Authorization: "Bearer " + tok, source: "PORTAL_USER", channel: "APP", version: "2023-02-21", "x-location-id": loc }, extra || {});
+    }
+    async function supportGroupId(tok, loc){
+      const k = "bb-group-id-" + SUPPORT_GROUP;
+      try { const c = sessionStorage.getItem(k); if (c) return c; } catch (e) {}
+      const base = "https://services.leadconnectorhq.com/clientportal-middleware/communities/" + loc + "/groups?enabled=true&limit=50&skip=";
+      for (let skip = 0; skip < 500; skip += 50){
+        const r = await fetch(base + skip, { headers: lcHeaders(tok, loc) });
+        if (!r.ok) return "";
+        const list = await r.json();
+        const g = (Array.isArray(list) ? list : []).find(x => x && x.slug === SUPPORT_GROUP);
+        if (g){ try { sessionStorage.setItem(k, g._id); } catch (e) {} return g._id; }
+        if (!Array.isArray(list) || list.length < 50) return "";
+      }
+      return "";
+    }
+    function loadEvents(){
+      if (evt.loading || (evt.list && Date.now() - evt.at < 5 * 60 * 1000)) return;
+      const st = getPiniaState();
+      const tok = st && st.auth && st.auth.token;
+      const loc = st && st.location && st.location.locationId;
+      if (!tok || !loc) return;                // not hydrated yet; next tick retries
+      evt.loading = true;
+      supportGroupId(tok, loc).then(gid => {
+        if (!gid) return [];
+        const u = "https://services.leadconnectorhq.com/clientportal-middleware/communities/" + loc + "/groups/" + gid +
+                  "/events/past-upcoming?currentDate=" + encodeURIComponent(new Date().toISOString()) + "&limit=" + EVENTS_LIMIT;
+        return fetch(u, { headers: lcHeaders(tok, loc, { "x-group-id": gid }) })
+          .then(r => r.ok ? r.json() : {}).then(j => (j && j.upcomingEvents) || []);
+      }).catch(() => []).then(list => {
+        evt.list = list.slice(0, EVENTS_LIMIT); evt.at = Date.now();
+      }).finally(() => { evt.loading = false; updateAll(); });
+    }
+    /* Repeating events come back with the series' first clock time, unshifted
+       by daylight saving (a 2pm LA weekly from June arrives as 1pm in Nov).
+       The Calendar keeps the clock time in the event's timezone, so do the same:
+       the series' start time-of-day in e.timezone, on this occurrence's date. */
+    function tzParts(d, tz){
+      const o = {};
+      new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+        .formatToParts(d).forEach(p => { o[p.type] = +p.value; });
+      return o;
+    }
+    function zonedToDate(y, mo, d, h, mi, tz){
+      let t = Date.UTC(y, mo - 1, d, h, mi);
+      for (let i = 0; i < 2; i++){
+        const p = tzParts(new Date(t), tz);
+        t -= Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Date.UTC(y, mo - 1, d, h, mi);
+      }
+      return new Date(t);
+    }
+    function eventTimes(e){
+      const s = new Date(e.startTime), en = new Date(e.endTime);
+      const rs = e.recurringMeta && e.recurringMeta.eventStart;
+      if (!e.isRecurring || !rs || !e.timezone) return [s, en];
+      try {
+        const first = tzParts(new Date(rs), e.timezone), day = tzParts(s, e.timezone);
+        const fixed = zonedToDate(day.year, day.month, day.day, first.hour, first.minute, e.timezone);
+        return [fixed, new Date(fixed.getTime() + (en - s))];
+      } catch (x) { return [s, en]; }
+    }
+    function renderEvents(box){
+      loadEvents();
+      const list = evt.list;
+      const sig = list ? list.map(e => (e._id || e.eventId) + e.startTime + e.title).join("|") : "__loading";
+      if (box.getAttribute("data-sig") === sig) return;
+      box.setAttribute("data-sig", sig);
+      box.innerHTML = "";
+      const head = document.createElement("div"); head.className = "bb-ev-head";
+      const h = document.createElement("h2"); h.textContent = "Upcoming Events";
+      const all = document.createElement("a"); all.className = "bb-ev-all"; all.href = EVENTS_PATH;
+      all.innerHTML = 'View calendar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+      head.appendChild(h); head.appendChild(all); box.appendChild(head);
+      if (!list){
+        for (let i = 0; i < 3; i++){ const sk = document.createElement("div"); sk.className = "bb-ev-skel"; box.appendChild(sk); }
+        return;
+      }
+      if (!list.length){
+        const p = document.createElement("div"); p.className = "bb-ev-empty"; p.textContent = "No upcoming events.";
+        box.appendChild(p); return;
+      }
+      const fmtT = d => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+      let lastDay = "";
+      list.forEach(e => {
+        const [s, en] = eventTimes(e);
+        const day = s.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        if (day !== lastDay){
+          lastDay = day;
+          const d = document.createElement("div"); d.className = "bb-ev-day"; d.textContent = day; box.appendChild(d);
+        }
+        const a = document.createElement("a"); a.className = "bb-ev-item"; a.href = EVENTS_PATH;
+        a.style.setProperty("--ev", e.eventColor || "#004eeb");
+        const t = document.createElement("div"); t.className = "bb-ev-title"; t.textContent = e.title || "Event";
+        const tm = document.createElement("div"); tm.className = "bb-ev-time";
+        tm.textContent = fmtT(s) + (isNaN(en) ? "" : " – " + fmtT(en));
+        a.appendChild(t); a.appendChild(tm);
+        if (e.rsvpMeta && e.rsvpMeta.hasRegistered){
+          const r = document.createElement("span"); r.className = "bb-ev-reg"; r.textContent = "Registered"; a.appendChild(r);
+        }
+        a.addEventListener("click", ev => {
+          if (ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
+          try { sessionStorage.setItem(EVENT_OPEN_KEY, JSON.stringify({ id: e._id || "", title: e.title || "", start: e.startTime, ts: Date.now() })); } catch (x) {}
+          const rt = getRouter();
+          if (rt && rt.push){ ev.preventDefault(); rt.push(EVENTS_PATH); }
+        });
+        box.appendChild(a);
+      });
+      all.addEventListener("click", ev => {
+        if (ev.metaKey || ev.ctrlKey || ev.shiftKey) return;
+        const rt = getRouter();
+        if (rt && rt.push){ ev.preventDefault(); rt.push(EVENTS_PATH); }
+      });
+    }
+    /* On the Calendar page: open the event picked on the dashboard by clicking
+       it in the page's own Upcoming list (recurring events there have no id,
+       so fall back to the title, then the n-th one with that title by time). */
+    function openPendingEvent(){
+      if (!/^\/communities\/groups\/[^/]+\/events\/?$/.test(location.pathname)) return;
+      let want;
+      try { want = JSON.parse(sessionStorage.getItem(EVENT_OPEN_KEY) || "null"); } catch (e) {}
+      if (!want) return;
+      if (Date.now() - want.ts > 20000){ try { sessionStorage.removeItem(EVENT_OPEN_KEY); } catch (e) {} return; }
+      const btns = [...document.querySelectorAll('button[id^="events-sidebar-event-"]')];
+      if (!btns.length) return;
+      let b = want.id && document.getElementById("events-sidebar-event-" + want.id);
+      if (!b){
+        const norm = x => String(x || "").replace(/\s+/g, " ").trim();
+        b = btns.find(x => { const p = x.querySelector("p p, .truncate"); return p && norm(p.textContent) === norm(want.title); });
+      }
+      if (!b) return;                           // list may still be filling in; retry next tick
+      try { sessionStorage.removeItem(EVENT_OPEN_KEY); } catch (e) {}
+      b.click();
     }
     function makeSkeleton(){
-      const w = document.createElement('div');
-      w.style.cssText = 'display:flex;flex-direction:column;gap:12px;';
-      for (let i=0;i<3;i++){
-        const c = document.createElement('div'); c.className='bb-course-card';
-        const t = document.createElement('div'); t.style.cssText='height:16px;width:55%;background:#eceef1;border-radius:6px;';
-        const b = document.createElement('div'); b.style.cssText='height:32px;width:110px;background:#eceef1;border-radius:8px;';
-        c.appendChild(t); c.appendChild(b); w.appendChild(c);
-      }
-      return w;
+      const g = document.createElement('div'); g.className = 'bb-pg-grid';
+      for (let i=0;i<3;i++){ const c = document.createElement('div'); c.className = 'bb-pg-skel'; g.appendChild(c); }
+      return g;
     }
-    // Ensures the row wrapper + top-row (continue-watching + Bob) + panel below exist (instant, no API needed)
+    /* ────────── Dashboard v2 ──────────
+       One grid (#custom-cw-row, layout in portal.css §17):
+         greeting                      | Bob (fixed height)
+         Accelerator                   |
+         Need Help + Inner Circle      |
+         Pick up where you left off    |
+         Assigned Programs (image cards)|
+       Pick-up is the portal's own section, restyled: image left, text right. */
+    function displayFirstName(){
+      let n = state.firstName || "";
+      if (!n){
+        const st = getPiniaState();
+        const prof = (st && st["current-user"] && st["current-user"].profile) || {};
+        n = prof.firstName || (prof.fullName || "").split(" ")[0] || "";
+      }
+      n = String(n).trim();
+      return n ? n.charAt(0).toUpperCase() + n.slice(1) : "";
+    }
+    function decoratePickup(sec){
+      const textCol = sec.querySelector("article .min-w-0.flex-1");
+      if (textCol && !textCol.querySelector(".bb-pick-label")){
+        const l = document.createElement("div"); l.className = "bb-pick-label";
+        l.textContent = "Pick up where you left off";
+        textCol.insertBefore(l, textCol.firstChild);
+      }
+    }
     function ensurePanelShell(){
       const sec = document.getElementById("continue-watching-section-root");
       if (!sec) return null;
@@ -489,74 +878,132 @@
         row = document.createElement("div"); row.id = "custom-cw-row";
         sec.parentElement.insertBefore(row, sec);
       }
-      // Top row: continue-watching (left) + Bob embed (right)
-      let topRow = document.getElementById("bb-top-row");
-      if (!topRow || !topRow.isConnected){
-        topRow = document.createElement("div"); topRow.id = "bb-top-row";
-        row.insertBefore(topRow, row.firstChild);
+      // Main column = three full-width bands (white · grey · white); Bob is
+      // the rail beside it. Each band is created once and reused.
+      const band = (id, parent) => {
+        let el = document.getElementById(id);
+        if (!el){ el = document.createElement("div"); el.id = id; el.className = "bb-band"; }
+        if (el.parentElement !== parent) parent.appendChild(el);
+        return el;
+      };
+      let main = document.getElementById("bb-main");
+      if (!main){ main = document.createElement("div"); main.id = "bb-main"; }
+      if (main.parentElement !== row) row.insertBefore(main, row.firstChild);
+      const bTop = band("bb-band-top", main);
+      const bProgs = band("bb-band-progs", main);
+      // Need Help sits in the top band, beside the pick-up card, so it's
+      // visible without scrolling. Drop the old separate band if present.
+      const oldHelpBand = document.getElementById("bb-band-help");
+      if (oldHelpBand) oldHelpBand.remove();
+      // Greeting
+      let greet = document.getElementById("bb-greeting");
+      if (!greet){ greet = document.createElement("h1"); greet.id = "bb-greeting"; }
+      if (greet.parentElement !== bTop) bTop.insertBefore(greet, bTop.firstChild);
+      const name = displayFirstName();
+      const gt = name ? "Good to see you, " + name + "." : "Good to see you.";
+      if (greet.textContent !== gt) greet.textContent = gt;
+      // Top band, top to bottom: greeting, Accelerator, Need Help + Inner
+      // Circle (one full-width row), then Pick up where you left off.
+      let accel = document.getElementById("bb-accel");
+      if (!accel){ accel = document.createElement("section"); accel.id = "bb-accel"; accel.hidden = true; }
+      if (accel.previousElementSibling !== greet) greet.insertAdjacentElement("afterend", accel);
+      renderAccel(accel);
+      let helpCol = document.getElementById("bb-help-col");
+      if (!helpCol || !helpCol.isConnected){
+        helpCol = document.createElement("div"); helpCol.id = "bb-help-col";
       }
-      if (sec.parentElement !== topRow) topRow.appendChild(sec);
-      // Bob slot. Reuse the SAME node across rebuilds (bobCol) instead of
-      // recreating it — otherwise every dashboard re-render throws away
-      // whatever the Bob widget mounted inside and it has to start over.
+      if (helpCol.previousElementSibling !== accel) accel.insertAdjacentElement("afterend", helpCol);
+      renderHelp(helpCol);
+      let topGrid = document.getElementById("bb-top-grid");
+      if (!topGrid){ topGrid = document.createElement("div"); topGrid.id = "bb-top-grid"; }
+      if (topGrid.previousElementSibling !== helpCol) helpCol.insertAdjacentElement("afterend", topGrid);
+      if (sec.parentElement !== topGrid) topGrid.insertBefore(sec, topGrid.firstChild);
+      decoratePickup(sec);
+      // Bob rail. Same node across rebuilds so the mounted widget survives.
       let right = document.getElementById("bb-right-col");
       if (!right || !right.isConnected){
         if (!bobCol){ bobCol = document.createElement("div"); bobCol.id = "bb-right-col"; }
         right = bobCol;
       }
       bobCol = right;
-      const host = ensureBobHost();
-      if (host.parentElement !== right){
+      let bobBox = right.querySelector("#bb-bob-box");
+      if (!bobBox){
         right.textContent = "";
-        host.removeAttribute("style");   // un-park it; the stylesheet owns the size from here
-        right.appendChild(host);
-      } else if (host.getAttribute("style")){
-        // The widget stamps height:560px on a host it finds shorter than
-        // 240px. Here the stylesheet owns the size (inset:0), and a stray
-        // inline height would clip the input row — strip it every tick.
-        host.removeAttribute("style");
+        bobBox = document.createElement("div"); bobBox.id = "bb-bob-box";
+        right.appendChild(bobBox);
       }
-      if (right.parentElement !== topRow) topRow.appendChild(right);
-      // Assigned Courses panel: full-width, BELOW the top row
+      const host = ensureBobHost();
+      if (host.parentElement !== bobBox){
+        bobBox.textContent = "";
+        host.removeAttribute("style");
+        bobBox.appendChild(host);
+      } else if (host.getAttribute("style")){
+        host.removeAttribute("style");   // widget stamps height:560px on short hosts
+      }
+      if (right.parentElement !== row) row.appendChild(right);
+      // Upcoming events, under Bob
+      let evBox = right.querySelector("#bb-events");
+      if (!evBox){ evBox = document.createElement("section"); evBox.id = "bb-events"; }
+      if (evBox.previousElementSibling !== bobBox) bobBox.insertAdjacentElement("afterend", evBox);
+      renderEvents(evBox);
+      // Assigned Programs
       let panel = document.getElementById("bb-priority-courses");
       if (!panel){
         panel = document.createElement("section"); panel.id = "bb-priority-courses";
-        panel.className = "rounded-xl bg-background p-4 border border-solid border-default shadow-sm";
         const head = document.createElement("div"); head.className = "bb-pc-head";
-        const h = document.createElement("h2");
-        h.className = "hr-text hr-text-2xl hr-text-semibold text-700";
-        // Heading spacing lives in the stylesheet: #bb-priority-courses h2
-        h.textContent = "Assigned Programs";
+        const h = document.createElement("h2"); h.textContent = "Assigned Programs";
         const cnt = document.createElement("span"); cnt.className = "bb-pc-count"; cnt.hidden = true;
-        head.appendChild(h); head.appendChild(cnt);
+        const all = document.createElement("a"); all.className = "bb-pc-all";
+        all.href = "/courses/my-courses";
+        all.innerHTML = 'View all programs <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+        all.addEventListener("click", e => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+          const rt = getRouter();
+          if (rt && rt.push){ e.preventDefault(); rt.push("/courses/my-courses"); }
+        });
+        head.appendChild(h); head.appendChild(cnt); head.appendChild(all);
         panel.appendChild(head);
         const body = document.createElement("div"); body.className = "bb-pc-body";
         panel.appendChild(body);
       }
-      // Bottom row: Need Help (left, 1/3) + Assigned Courses (right, 2/3).
-      // When the viewer isn't tagged, renderHelp() hides the column and the
-      // courses panel takes the full width on its own.
-      let bottomRow = document.getElementById("bb-bottom-row");
-      if (!bottomRow || !bottomRow.isConnected){
-        bottomRow = document.createElement("div"); bottomRow.id = "bb-bottom-row";
-      }
-      if (bottomRow.parentElement !== row) row.appendChild(bottomRow);
-
-      let helpCol = document.getElementById("bb-help-col");
-      if (!helpCol || !helpCol.isConnected){
-        helpCol = document.createElement("div"); helpCol.id = "bb-help-col";
-      }
-      if (helpCol.parentElement !== bottomRow) bottomRow.insertBefore(helpCol, bottomRow.firstChild);
-      renderHelp(helpCol);
-
-      if (panel.parentElement !== bottomRow) bottomRow.appendChild(panel);
+      if (panel.parentElement !== bProgs) bProgs.appendChild(panel);
       return panel;
+    }
+    /* Course images + descriptions from the portal's own library endpoint,
+       with the signed-in user's token. Cached for the session. Failure just
+       means cards without images. */
+    const LIB_CACHE_KEY = "bb-course-lib";
+    let lib = null, libLoading = false;
+    function loadLibrary(){
+      if (lib || libLoading) return;
+      try {
+        const c = JSON.parse(sessionStorage.getItem(LIB_CACHE_KEY) || "null");
+        if (c && Date.now() - c.ts < 30 * 60 * 1000){ lib = c.map; return; }
+      } catch (e) {}
+      const st = getPiniaState();
+      const tok = st && st.auth && st.auth.token;
+      const loc = st && st.location && st.location.locationId;
+      if (!tok || !loc) return;              // not hydrated yet; next tick retries
+      libLoading = true;
+      fetch("https://services.leadconnectorhq.com/clientportal-middleware/courses/learners/locations/" + loc + "/courses/library", {
+        headers: { Authorization: "Bearer " + tok, source: "PORTAL_USER", channel: "APP", version: "2021-07-28", "x-location-id": loc }
+      }).then(r => r.ok ? r.json() : []).then(list => {
+        // Some posters are a relative path; My Courses serves those from this host.
+        const abs = (u) => /^https?:\/\//.test(u) ? u : "https://assetsdrm.clientclub.net/images/courses/gcs_revex-membership-production" + (u.charAt(0) === "/" ? "" : "/") + u + "?fmt=webp&qlt=90&rsz=fill";
+        const map = {};
+        (Array.isArray(list) ? list : []).forEach(p => {
+          if (!p || !p.id) return;
+          map[p.id] = { img: p.posterImage ? abs(p.posterImage) : "", desc: (p.description || "").trim() };
+        });
+        lib = map;
+        try { sessionStorage.setItem(LIB_CACHE_KEY, JSON.stringify({ ts: Date.now(), map })); } catch (e) {}
+      }).catch(() => { lib = {}; }).finally(() => { libLoading = false; updateAll(); });
     }
     function injectCourses(){
       const panel = ensurePanelShell();
       if (!panel) return;
+      loadLibrary();
       const body = panel.querySelector('.bb-pc-body');
-      // Still loading (or still waiting on identity) -> show skeleton once
       if (!state.loaded){
         if (panel.getAttribute('data-sig') !== '__loading'){
           body.innerHTML = ''; body.appendChild(makeSkeleton());
@@ -565,52 +1012,56 @@
         return;
       }
       const matched = (state.courseNames || []).map(n => byName.get(normalizeText(n))).filter(Boolean);
-      const sig = matched.length ? matched.map(m => normalizeText(m.name)).join('|') : '__empty';
+      const sig = (matched.length ? matched.map(m => normalizeText(m.name)).join('|') : '__empty') + (lib ? '#lib' : '');
       if (panel.getAttribute('data-sig') === sig) return;
       panel.setAttribute('data-sig', sig);
       body.innerHTML = '';
+      const cnt = panel.querySelector('.bb-pc-count');
       if (!matched.length){
-        const cnt0 = panel.querySelector('.bb-pc-count'); if (cnt0) cnt0.hidden = true;
-        const p = document.createElement('div'); p.className = 'hr-text text-600';
+        if (cnt) cnt.hidden = true;
+        const p = document.createElement('div'); p.className = 'bb-pc-empty';
         p.textContent = 'No assigned programs yet.'; body.appendChild(p); return;
       }
-      const wrap = document.createElement('div'); wrap.className = 'bb-course-list-wrap';
-      const list = document.createElement('div'); list.className = 'bb-course-list';
-      const cnt = panel.querySelector('.bb-pc-count');
-      if (cnt){ cnt.textContent = matched.length + ' assigned'; cnt.hidden = false; }
+      if (cnt){ cnt.textContent = matched.length + (matched.length === 1 ? ' program' : ' programs'); cnt.hidden = false; }
+      const grid = document.createElement('div'); grid.className = 'bb-pg-grid';
       matched.forEach(c => {
-        const card = document.createElement('div'); card.className = 'bb-course-card';
-        card.dataset.link = c.link;
-        const icon = document.createElement('div'); icon.className = 'bb-course-icon';
-        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2 9 2 12 0v-5"/></svg>';
-        card.appendChild(icon);
-        // title + optional blurb stack in the middle, button stays right
-        const text = document.createElement('div'); text.className = 'bb-course-text';
-        const t = document.createElement('span'); t.className = 'hr-text hr-text-lg text-700 bb-course-title'; t.textContent = c.name;
-        text.appendChild(t);
-        const desc = COURSE_DESCRIPTIONS[normalizeText(c.name)];
-        if (desc){
-          const d = document.createElement('div'); d.className = 'bb-course-desc hr-text text-600';
-          d.textContent = desc; text.appendChild(d);
+        const id = c.link.split('/').pop();
+        const info = (lib && lib[id]) || {};
+        const card = document.createElement('a'); card.className = 'bb-pg-card'; card.href = c.link;
+        const thumb = document.createElement('div'); thumb.className = 'bb-pg-thumb';
+        if (info.img){
+          const im = document.createElement('img'); im.src = info.img; im.alt = ''; im.loading = 'lazy';
+          im.onerror = () => { im.remove(); thumb.classList.add('bb-pg-thumb--empty'); };
+          thumb.appendChild(im);
+        } else {
+          thumb.classList.add('bb-pg-thumb--empty');
         }
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'bb-course-btn';
-        b.textContent = 'Go to Course'; b.dataset.link = c.link;
-        card.appendChild(text); card.appendChild(b); list.appendChild(card);
+        card.appendChild(thumb);
+        const b = document.createElement('div'); b.className = 'bb-pg-body';
+        const t = document.createElement('div'); t.className = 'bb-pg-title'; t.textContent = c.name;
+        b.appendChild(t);
+        const desc = info.desc || COURSE_DESCRIPTIONS[normalizeText(c.name)];
+        if (desc){ const d = document.createElement('div'); d.className = 'bb-pg-desc'; d.textContent = desc; b.appendChild(d); }
+        const btn = document.createElement('span'); btn.className = 'bb-pg-btn';
+        btn.innerHTML = '<span>Go to program</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+        b.appendChild(btn);
+        card.appendChild(b);
+        grid.appendChild(card);
       });
-      wrap.appendChild(list);
-      body.appendChild(wrap);
-      // fade at the bottom while more cards are hidden below the fold
-      const syncMore = () => wrap.classList.toggle('bb-has-more', list.scrollTop + list.clientHeight < list.scrollHeight - 4);
-      list.addEventListener('scroll', syncMore, { passive: true });
-      requestAnimationFrame(syncMore);
+      body.appendChild(grid);
       if (!panel.__clickWired){
         panel.__clickWired = true;
-        // the whole card is clickable, not just the button
-        panel.addEventListener('click', e => { const c = e.target.closest('.bb-course-card'); if (c && c.dataset.link) window.location.href = c.dataset.link; });
+        // soft navigation inside the portal; modifier-clicks open a new tab as normal
+        panel.addEventListener('click', e => {
+          const c = e.target.closest('.bb-pg-card'); if (!c) return;
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+          const rt = getRouter();
+          if (rt && rt.push){ e.preventDefault(); rt.push(new URL(c.href).pathname); }
+        });
       }
     }
     /* ────────── run: non-blocking startup ────────── */
-    const updateAll = debounceRaf(() => { buildMenu(); fixNavLabels(); fixNavIcons(); markActiveNav(); injectCourses(); });
+    const updateAll = debounceRaf(() => { buildMenu(); fixNavLabels(); fixNavIcons(); markActiveNav(); injectCourses(); syncRoadmapView(); openPendingEvent(); });
 
     // Identity arrives asynchronously. Fetch the moment it appears, and
     // re-fetch if it ever changes (account switch, re-login).
@@ -897,10 +1348,11 @@
     if (window.__bbFooter) return;
     window.__bbFooter = true;
 
-    // Dashboard, File Share, Affiliates. Prefix matches, so
-    // sub-routes (e.g. /affiliates/campaign) count too.
+    // File Share, Affiliates. Prefix matches, so sub-routes
+    // (e.g. /affiliates/campaign) count too. Not the dashboard: its bands
+    // and Bob rail run to the bottom of the page, and a footer under them
+    // looked detached.
     const FOOTER_PATHS = [
-      /^\/dashboard\/?$/,
       /^\/shared-files/,
       /^\/affiliates/,
     ];

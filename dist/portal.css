@@ -1,4 +1,4 @@
-/* BB_VERSION 1.0.22 · 2026-11-12 · botbuilders-portal · portal.css */
+/* BB_VERSION 1.0.22 · 2026-11-25 · botbuilders-portal · portal.css */
 
 /* ═══════════════════════════════════════════════════════════════════════
    BOTBUILDERS PORTAL — CUSTOM CSS
@@ -79,259 +79,363 @@
 }
 
 
-/* ═══ 2. DASHBOARD LAYOUT ══════════════════════════════════════════════
-   Two rows:
-     top    — Pick up where you left off (3/5) | Bob        (2/5)
-     bottom — Assigned Courses           (2/3) | Need Help  (1/3)
-   `flex: 2 1 0` / `flex: 1 1 0` rather than percentages: with a 16px gap,
-   percentage bases overflow the row and get shrunk back unevenly. A zero
-   basis splits what's actually left after the gap, giving a true 2:1.
+/* ═══ 2. DASHBOARD LAYOUT (v2) ═════════════════════════════════════════
+   Built by portal.js inside the dashboard:
+     #custom-cw-row  = [ #bb-main | #bb-right-col (Bob rail) ]
+     #bb-main        = three full-width bands:
+        #bb-band-top    white  — greeting, Accelerator, Need Help + Inner
+                                 Circle (one row), Pick up (#bb-top-grid)
+        #bb-band-progs  grey   — Assigned Programs
+   The row cancels the page's 24px padding so the bands and Bob's rail run
+   edge to edge, like the design. Below 1100px Bob drops under the top band.
    ════════════════════════════════════════════════════════════════════ */
 
 #custom-cw-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 27%, 420px);
+  margin: -24px;                 /* the page's p-6 */
+  width: auto;
+  align-items: stretch;
+  background: #fff;
+}
+#bb-main {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
+  background: #fff;
 }
-
-#bb-top-row,
-#bb-bottom-row {
+.bb-band {
+  padding: 32px clamp(24px, 3vw, 44px);
+}
+#bb-band-top {
   display: flex;
-  gap: 16px;
-  width: 100%;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 24px;
+  background: #fff;
+}
+#bb-band-progs {
+  background: #f5f7fb;
+  border-top: 1px solid #e9edf3;
+  padding-block: 36px 40px;
+  flex: 1 1 auto;                /* fills down to the bottom of Bob's rail */
 }
 
-/* Top row 2:1 with the same minimum as the bottom row, so "Pick up where
-   you left off" is exactly as wide as Assigned Programs below it. */
-#bb-top-row > #continue-watching-section-root {
-  flex: 2 1 0;
-  min-width: 0;
-}
-#bb-top-row > #bb-right-col {
-  flex: 1 1 0;
-  min-width: 280px;
+#bb-top-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 
-/* `order` puts Need Help on the right while the JS still builds it first in
-   the DOM. Stacked on mobile that means courses first, help below. */
-#bb-bottom-row > #bb-help-col {
-  order: 2;
-  flex: 1 1 0;
-  min-width: 280px;
-  display: flex;           /* lets the card stretch to the row height */
-}
-#bb-bottom-row > #bb-priority-courses {
-  order: 1;
-  flex: 2 1 0;
-  min-width: 0;
-  width: auto;
+#bb-greeting {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #101828;
 }
 
 
-/* ═══ 3. BOB INLINE EMBED ══════════════════════════════════════════════
-   The host is absolutely positioned against this column. .bob-panel sizes
-   itself with height:100%, which only resolves against a parent with a
-   DEFINITE height — flex:1 or min-height alone are not definite and the
-   panel collapses to ~180px of content. inset:0 on a positioned parent is.
-   ════════════════════════════════════════════════════════════════════ */
+/* ═══ 3. BOB RAIL ══════════════════════════════════════════════════════
+   Flush to the right edge with a divider, stretched to the height of the
+   bands beside it and capped at the visible screen (56px topbar). Sticky,
+   so it stays in place while the bands scroll, and at the bottom it ends
+   level with the Need Help band.
+   .bob-panel sizes itself with height:100%, which needs a DEFINITE parent
+   height — hence the host is absolutely inset. Bob needs ~520px. */
 
 #bb-right-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid #e4e7ec;
+  background: #fff;
+}
+#bb-bob-box {
   position: relative;
-  min-height: 600px;
-  border-radius: 12px;
+  flex: 0 0 auto;
+  height: 600px;
   overflow: hidden;
+  border-bottom: 1px solid #e4e7ec;
 }
-/* Short windows: the column stretches to the "Pick up where you left off"
-   card, which can be taller than the screen, pushing Bob's input row below
-   the fold. Cap the column to the visible part of the scroll area (56px
-   topbar + 24px padding top and bottom) and make it sticky so it stays in
-   view while the card scrolls. min() keeps the 600px floor from beating the
-   cap — min-height wins over max-height, so the floor has to shrink too.
-   Bob needs >= 240px; the cap only drops that low on a ~344px-tall window. */
-#bb-top-row > #bb-right-col {
-  position: sticky;
-  top: 24px;
-  /* 520 (was 600) so Bob doesn't stretch the shorter continue-watching card
-     and leave blank space under it; Bob still grows with the row. */
-  min-height: min(520px, calc(100vh - 104px));
-  max-height: calc(100vh - 104px);
-}
-#bb-right-col > [data-bob-embed] {
+#bb-bob-box > [data-bob-embed] {
   position: absolute;
   inset: 0;
 }
 
 
-/* ═══ 4. CONTINUE WATCHING ═════════════════════════════════════════════ */
+/* ═══ 4. PICK UP WHERE YOU LEFT OFF ═══════════════════════════════════
+   The portal's own section and data (title, n/68 lessons, description,
+   Continue button), restyled: image left, everything else right. */
 
 #continue-watching-section-root {
+  container-type: inline-size;
+  padding: 0 !important;
   overflow: hidden;
+  border-radius: 16px !important;
+  border: 1px solid #e4e7ec !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06) !important;
 }
-#continue-watching-section-root .lg\:flex-row {
-  flex-direction: column !important;
+/* the portal's heading moves into the text column as a small label (JS) */
+#continue-watching-section-root > div:has(> #continue-watching-section-heading) {
+  display: none !important;
 }
-#continue-watching-section-root .lg\:flex-row > * {
-  width: 100% !important;
-  max-width: 100% !important;
+#continue-watching-section-root article > .flex {
+  flex-direction: row !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+}
+/* image keeps its true 16:9 shape (never cropped), inset like a framed tile */
+#continue-watching-section-root article > .flex > .shrink-0 {
+  width: 42% !important;
+  max-width: 600px;
+  flex: 0 0 auto;
+  padding: 16px 0 16px 16px;
+  align-self: center;
+}
+#continue-watching-section-root article .aspect-video {
+  border-radius: 12px !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
 }
 #continue-watching-section-root img,
 #continue-watching-section-root video {
   width: 100% !important;
-  height: 100% !important;   /* fill the (capped) thumbnail box below */
-  object-fit: cover;
+  height: 100% !important;
+  object-fit: cover !important;
 }
-/* The portal keeps the thumbnail in a 16:9 box. Capping the image alone left
-   the box at full height — a blank strip between thumbnail and title — so
-   cap the box itself; the image fills it with object-fit: cover. */
-#continue-watching-section-root .relative.overflow-hidden.h-full.w-full {
-  max-height: 280px;
+#continue-watching-section-root article .min-w-0.flex-1 {
+  padding: 20px 22px !important;
+  gap: 8px !important;
+  justify-content: center;
+}
+/* order: label · title · description · progress · button */
+#continue-watching-section-root .bb-pick-label { order: 0; }
+#continue-watching-section-root article .min-w-0.flex-1 > h3 { order: 1; }
+#continue-watching-section-root article .min-w-0.flex-1 > p { order: 2; }
+#continue-watching-section-root article .min-w-0.flex-1 > .w-full { order: 3; }
+#continue-watching-section-root article .min-w-0.flex-1 > div:last-child { order: 4; }
+
+.bb-pick-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(0, 78, 235);
+}
+.bb-pick-label::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgb(0, 78, 235);
+  box-shadow: 0 0 0 4px #e0eaff;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > h3 {
+  font-size: clamp(18px, 1.5vw, 24px) !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+  color: #101828 !important;
+  margin: 0;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > p {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  color: #475467 !important;
+  -webkit-line-clamp: 3;
+}
+/* "0/68 lessons" — the portal renders it at 2xl; bring it down to a caption */
+#continue-watching-section-root article .w-full p.hr-text-2xl {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  color: #475467 !important;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > .w-full {
+  max-width: 420px;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > div:last-child button {
+  background: rgb(0, 78, 235) !important;
+  border-color: rgb(0, 78, 235) !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  padding: 0 20px !important;
+  height: 44px !important;
+  margin-top: 4px;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > div:last-child button * {
+  color: #fff !important;
+}
+#continue-watching-section-root article .min-w-0.flex-1 > div:last-child button:hover {
+  background: rgb(0, 62, 188) !important;
 }
 
 
-/* ═══ 5. ASSIGNED COURSES ══════════════════════════════════════════════ */
-
-#bb-priority-courses {
-  width: 100%;             /* applies wherever the panel isn't in #bb-bottom-row */
-  padding: 16px;
+/* Only a genuinely narrow card (tablet widths) stacks image over text. */
+@container (max-width: 400px) {
+  #continue-watching-section-root article > .flex {
+    flex-direction: column !important;
+  }
+  #continue-watching-section-root article > .flex > .shrink-0 {
+    width: 100% !important;
+    max-width: none;
+    padding: 16px 16px 0;
+  }
+  #continue-watching-section-root article .min-w-0.flex-1 {
+    padding: 18px 20px 20px !important;
+  }
 }
-#bb-priority-courses h2 {
-  margin: 0 0 8px;         /* the portal's default h2 carries a ~17px top margin */
-  line-height: 1.25;       /* and a 33.6px line-height on 21px text */
+/* Narrower card (small laptops): give the image a bigger share */
+@container (min-width: 401px) and (max-width: 560px) {
+  #continue-watching-section-root article > .flex > .shrink-0 {
+    width: 48% !important;
+    padding: 14px 0 14px 14px;
+  }
+  #continue-watching-section-root article .min-w-0.flex-1 {
+    padding: 14px 16px !important;
+  }
+  #continue-watching-section-root article .min-w-0.flex-1 > p {
+    -webkit-line-clamp: 2;
+  }
+}
+/* centre image and text vertically when the card is taller than its content */
+#continue-watching-section-root,
+#continue-watching-section-root article,
+#continue-watching-section-root article > .flex {
+  height: 100%;
+}
+#continue-watching-section-root article > .flex {
+  align-items: center !important;
 }
 
-/* Header: title + course-count chip */
+
+/* ═══ 5. ASSIGNED PROGRAMS ═════════════════════════════════════════════ */
+
 #bb-priority-courses .bb-pc-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 #bb-priority-courses .bb-pc-head h2 {
   margin: 0;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: #101828;
 }
 .bb-pc-count {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1;
   color: rgb(0, 78, 235);
   background: #eef4ff;
+  border: 1px solid #d1e0ff;
   border-radius: 999px;
-  padding: 5px 9px;
+  padding: 6px 11px;
 }
-
-/* Scrollable list: about four cards tall, then it scrolls inside the panel.
-   The wrapper draws a soft fade at the bottom while more cards are hidden
-   (JS toggles .bb-has-more). */
-.bb-course-list-wrap {
-  position: relative;
-}
-.bb-course-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 392px;
-  overflow-y: auto;
-  padding: 8px 4px 4px 0;
-  scrollbar-width: thin;
-  scrollbar-color: #d0d5dd transparent;
-}
-.bb-course-list::-webkit-scrollbar { width: 6px; }
-.bb-course-list::-webkit-scrollbar-thumb { background: #d0d5dd; border-radius: 999px; }
-.bb-course-list-wrap::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 8px;
-  bottom: 0;
-  height: 48px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.bb-course-list-wrap.bb-has-more::after {
-  opacity: 1;
-}
-
-.bb-course-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--border-default, #e5e7eb);
-  border-left: 3px solid rgb(0, 78, 235);
-  border-radius: 10px;
-  background: #fff;
-  cursor: pointer;
-  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
-}
-.bb-course-card:hover {
-  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.08);
-  transform: translateY(-1px);
-}
-.bb-course-icon {
-  flex: 0 0 40px;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: #eef4ff;
-  color: rgb(0, 78, 235);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.bb-course-icon svg {
-  width: 20px;
-  height: 20px;
-}
-.bb-course-text {
-  flex: 1 1 auto;
-  min-width: 0;            /* lets long titles/blurbs wrap instead of pushing the button */
-}
-/* The portal's own span renders at 14px/400 in a mid grey — near-identical to
-   the blurb, so the two read as one block. These separate them. */
-.bb-course-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #101828;
-  line-height: 1.35;
-}
-.bb-course-desc {
-  margin-top: 3px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #667085;
-}
-.bb-course-btn {
-  flex: 0 0 auto;
-  white-space: nowrap;
+.bb-pc-all {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  border: 1px solid #c7d7fe;
-  border-radius: 8px;
-  background: #fff;
-  color: rgb(0, 78, 235);
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
+  color: rgb(0, 78, 235) !important;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+.bb-pc-all svg { width: 16px; height: 16px; transition: transform 0.15s ease; }
+.bb-pc-all:hover svg { transform: translateX(3px); }
+.bb-pc-all:hover { text-decoration: underline !important; }
+.bb-pc-empty {
+  color: #667085;
+  padding: 18px;
+  border: 1px dashed #d0d5dd;
+  border-radius: 12px;
+  background: #fff;
+}
+.bb-pg-grid {
+  display: grid;
+  /* auto-fit: the cards share the full row instead of leaving empty tracks */
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px;
+}
+.bb-pg-card {
+  max-width: 520px;        /* a lone card doesn't stretch across the page */
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none !important;
+  color: inherit;
+  transition: box-shadow 0.18s ease, transform 0.18s ease;
+}
+.bb-pg-card:hover {
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.10);
+  transform: translateY(-2px);
+}
+.bb-pg-thumb {
+  aspect-ratio: 16 / 9;
+  background: #f2f4f7;
+  overflow: hidden;
+}
+.bb-pg-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bb-pg-thumb--empty {
+  background: linear-gradient(135deg, #1d2a5b 0%, rgb(0, 78, 235) 100%);
+}
+.bb-pg-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px 20px;
+  flex: 1 1 auto;
+}
+.bb-pg-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #101828;
+}
+.bb-pg-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #667085;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bb-pg-btn {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #101828;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.bb-course-btn::after {
-  content: "→";
-  transition: transform 0.15s ease;
-}
-.bb-course-card:hover .bb-course-btn {
+.bb-pg-body > .bb-pg-desc + .bb-pg-btn,
+.bb-pg-body > .bb-pg-title + .bb-pg-btn { margin-top: auto; }
+.bb-pg-body::after { content: none; }
+.bb-pg-btn svg { width: 18px; height: 18px; }
+.bb-pg-card:hover .bb-pg-btn {
   background: rgb(0, 78, 235);
   border-color: rgb(0, 78, 235);
   color: #fff;
 }
-.bb-course-card:hover .bb-course-btn::after {
-  transform: translateX(2px);
-}
+/* keep a gap above the button even when the description is short */
+.bb-pg-body { min-height: 150px; }
 
 /* ---- My Courses grid: drop the small avatar left of each card title ----
    Scoped to .my-course-card so the topbar profile avatar (same .hr-avatar
@@ -341,93 +445,541 @@
 }
 
 /* ---- Loading skeleton ---- */
-.bb-skeleton {
-  height: 64px;
-  border-radius: 10px;
-  margin-top: 12px;
+.bb-pg-skel {
+  height: 250px;
+  border-radius: 16px;
   background: linear-gradient(90deg, #f0f0f0 25%, #e6e6e6 37%, #f0f0f0 63%);
   background-size: 400% 100%;
   animation: bb-pulse 1.2s ease-in-out infinite;
 }
 @keyframes bb-pulse {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: -100% 0;
-  }
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 
-/* ═══ 6. NEED HELP CARD ════════════════════════════════════════════════
-   Rendered by the JS only for contacts tagged "global - test tag" or
-   "inner circle - active"; otherwise #bb-help-col is display:none and the
-   courses panel fills the row on its own.
-   ════════════════════════════════════════════════════════════════════ */
+/* ═══ 6. NEED HELP + INNER CIRCLE ═════════════════════════════════════
+   Both only for contacts tagged "global - test tag" or
+   "inner circle - active" (otherwise #bb-help-col is display:none).
+   The Inner Circle card only when the minutes / billing fields have values;
+   without it Need Help takes the full row. */
+
+/* One full-width card: Need Help (left, white) joined to Inner Circle
+   (right, dark) with no gap. Stacks when the row gets narrow. */
+#bb-help-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0;
+  min-width: 0;
+  border: 1px solid #e4e7ec;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+}
+#bb-help-col > #bb-help-card,
+#bb-help-col > #bb-plan-card {
+  border: 0;
+  border-radius: 0;
+}
+#bb-help-col > #bb-plan-card {
+  padding: 18px 20px;
+}
+#bb-help-col {
+  container-type: inline-size;
+}
+/* Narrow right column (small laptops): keep it short so the pick-up card
+   beside it stays image-left without empty space —
+   Inner Circle tiles become one-line rows, the blurb is clamped. */
 
 #bb-help-card {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  gap: 8px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 20px;
 }
+.bb-help-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.bb-help-icon {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: #eef4ff;
+  color: rgb(0, 78, 235);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bb-help-icon svg { width: 19px; height: 19px; }
 #bb-help-card h2 {
-  margin: 0 0 8px;
-  line-height: 1.25;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #101828;
 }
 .bb-help-body {
-  margin: 0 0 14px;
+  margin: 0;
+  font-size: 13px;
   line-height: 1.5;
+  color: #475467;
+}
+.bb-help-btn {
+  margin-top: auto;
+  align-self: flex-start;
+  background: #fff;
+  color: #101828;
+  padding: 7px 18px;
+  border: 1px solid #101828;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.bb-help-btn:hover {
+  background: #101828;
+  color: #fff;
 }
 
-/* ---- Stat tiles (only rendered when those custom fields have values) ---- */
-.bb-help-stats {
+/* ---- Inner Circle (dark) ---- */
+#bb-plan-card {
+  container-type: inline-size;
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  background: #1b2444;
+  border-radius: 20px;
+  color: #fff;
+}
+.bb-plan-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #b8c3e3;
+}
+.bb-plan-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 10px;
+  flex: 1 1 auto;
+}
+.bb-plan-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 11px;
+}
+.bb-plan-label {
+  font-size: 12px;
+  color: #b8c3e3;
+}
+.bb-plan-value {
+  font-size: clamp(15px, 5cqi, 20px);     /* sized to the card: "Aug 27, 2026" stays on one line */
+  white-space: nowrap;
+  line-height: 1.2;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.bb-plan-unit {
+  font-size: 13px;
+  font-weight: 500;
+  color: #b8c3e3;
+}
+
+
+/* Narrow right column (small laptops): keep it short so the pick-up card
+   beside it stays image-left without empty space — Inner Circle tiles
+   become one-line rows, the blurb is clamped to two lines. */
+@container (max-width: 330px) {
+  #bb-help-col .bb-plan-tiles {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+  #bb-help-col .bb-plan-tile {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  #bb-help-col .bb-plan-value {
+    font-size: 15px;
+  }
+  #bb-help-col .bb-help-body {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+
+/* ═══ 6c. ACCELERATOR BOX ══════════════════════════════════════════════
+   Under the pick-up row. Built by renderAccel() in portal.js; hidden unless
+   the viewer is tagged and the custom fields have values. */
+
+#bb-accel {
+  container-type: inline-size;
+  position: relative;
+  background: #fff;
+  border: 1px solid #e4e7ec;
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  padding: 18px 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#bb-accel[hidden] { display: none !important; }
+#bb-accel .bb-acc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
 }
-.bb-help-stat {
-  flex: 1 1 0;
-  min-width: 0;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 8px 10px;
+#bb-accel .bb-acc-logo {
+  height: 24px;
+  max-width: 60%;
+  width: auto;
+  display: block;
 }
-.bb-help-stat-label {
-  font-size: 11px;
-  letter-spacing: 0.02em;
+#bb-accel .bb-acc-wordmark {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #6b7280;
-  font-weight: 500;
-  margin-bottom: 2px;
+  background: linear-gradient(90deg, #004eeb, #7a3cf0);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
-.bb-help-stat-value {
-  font-size: 14px;
-  color: #111827;
+#bb-accel .bb-acc-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+#bb-accel .bb-acc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 600;
-  line-height: 1.3;
+  color: #1d2939;
+  text-decoration: none;
+  background: #fff;
+  transition: border-color .15s, color .15s, background .15s;
+}
+#bb-accel .bb-acc-btn svg { width: 15px; height: 15px; }
+#bb-accel .bb-acc-btn:hover {
+  border-color: #004eeb;
+  color: #004eeb;
+  background: #f5f8ff;
+}
+
+#bb-accel .bb-acc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+#bb-accel .bb-acc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 20px;
+  min-width: 0;
+}
+#bb-accel .bb-acc-item:first-child { padding-left: 0; }
+#bb-accel .bb-acc-item:last-child  { padding-right: 0; }
+#bb-accel .bb-acc-item + .bb-acc-item { border-left: 1px solid #eaecf0; }
+#bb-accel .bb-acc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+#bb-accel .bb-acc-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #101828;
+  cursor: help;
+  outline: none;
+  border-radius: 6px;
+}
+#bb-accel .bb-acc-label strong {
+  font-weight: 700;
+  border-bottom: 1px dashed #98a2b3;
+}
+#bb-accel .bb-acc-label:focus-visible { box-shadow: 0 0 0 3px rgba(0, 78, 235, .25); }
+#bb-accel .bb-acc-ico { display: inline-flex; color: #0b0f13; }
+#bb-accel .bb-acc-ico svg { width: 16px; height: 16px; flex-shrink: 0; }
+#bb-accel .bb-acc-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  width: max-content;
+  max-width: 270px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #1b2444;
+  color: #e6ebf7;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  box-shadow: 0 10px 24px rgba(16, 24, 40, .18);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity .15s, transform .15s, visibility .15s;
+  pointer-events: none;
+}
+#bb-accel .bb-acc-label:hover .bb-acc-tip,
+#bb-accel .bb-acc-label:focus .bb-acc-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+#bb-accel .bb-acc-item:last-child .bb-acc-tip { left: auto; right: 0; }
+#bb-accel .bb-acc-item--mit .bb-acc-tip { left: 0; right: auto; }
+#bb-accel .bb-acc-pct {
+  font-size: 13px;
+  font-weight: 700;
+  color: #344054;
+  font-variant-numeric: tabular-nums;
+}
+#bb-accel .bb-acc-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #eef1f6;
+  overflow: hidden;
+}
+#bb-accel .bb-acc-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #004eeb;
+  transition: width .6s ease;
+}
+#bb-accel .bb-acc-cap {
+  font-size: 12.5px;
+  color: #667085;
+}
+#bb-accel .bb-acc-mit {
+  font-size: 15px;
+  font-weight: 700;
+  color: #101828;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#bb-accel .bb-acc-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #004eeb;
+  text-decoration: none;
+  margin-top: auto;
+}
+#bb-accel .bb-acc-more svg { width: 14px; height: 14px; transition: transform .15s; }
+#bb-accel .bb-acc-more:hover svg { transform: translateX(2px); }
+
+#bb-accel .bb-acc-label strong { white-space: nowrap; }
+@container (max-width: 760px) {
+  #bb-accel .bb-acc-item { padding: 0 14px; }
+  #bb-accel .bb-acc-label { font-size: 13px; gap: 5px; }
+  #bb-accel .bb-acc-pct { font-size: 12px; }
+  #bb-accel .bb-acc-cap { font-size: 12px; }
+  #bb-accel .bb-acc-mit { font-size: 14px; }
+}
+/* Narrow box: stack the three items */
+@container (max-width: 620px) {
+  #bb-accel .bb-acc-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  #bb-accel .bb-acc-item,
+  #bb-accel .bb-acc-item:first-child,
+  #bb-accel .bb-acc-item:last-child { padding: 0; }
+  #bb-accel .bb-acc-item + .bb-acc-item { border-left: 0; border-top: 1px solid #eaecf0; padding-top: 16px; }
+  #bb-accel .bb-acc-item:last-child .bb-acc-tip { left: 0; right: auto; }
+}
+
+
+/* ═══ 6e. UPCOMING EVENTS (under Bob) ═════════════════════════════════
+   Built by renderEvents() in portal.js — the Calendar page's list. */
+
+#bb-events {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 20px 24px;
+}
+#bb-events .bb-ev-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+#bb-events h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #101828;
+}
+#bb-events .bb-ev-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #004eeb;
+  text-decoration: none;
+}
+#bb-events .bb-ev-all svg { width: 14px; height: 14px; }
+#bb-events .bb-ev-day {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #667085;
+}
+#bb-events .bb-ev-item {
+  position: relative;
+  display: block;
+  padding: 9px 12px 9px 16px;
+  border: 1px solid #eaecf0;
+  border-radius: 12px;
+  text-decoration: none;
+  background: #fff;
+  transition: border-color .15s, background .15s;
+}
+#bb-events .bb-ev-item::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ev, #004eeb);
+}
+#bb-events .bb-ev-item:hover {
+  border-color: #b2ccff;
+  background: #f5f8ff;
+}
+#bb-events .bb-ev-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #101828;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* rgb(0,78,235) is the portal's own primary — the same blue as the active
-   nav item — not the old portal's #2563eb. */
-.bb-help-btn {
-  margin-top: auto;        /* pins to the bottom so the card matches the courses height */
-  background: rgb(0, 78, 235);
-  color: #fff;
-  padding: 9px 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  width: 100%;
-  transition: background 0.15s ease;
+#bb-events .bb-ev-time {
+  font-size: 12.5px;
+  color: #667085;
 }
-.bb-help-btn:hover {
-  background: rgb(0, 62, 188);
+#bb-events .bb-ev-reg {
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #067647;
+  background: #ecfdf3;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+#bb-events .bb-ev-empty {
+  font-size: 13px;
+  color: #667085;
+}
+#bb-events .bb-ev-skel {
+  height: 52px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f2f4f7 25%, #e9edf3 37%, #f2f4f7 63%);
+  background-size: 400% 100%;
+  animation: bb-pulse 1.4s ease infinite;
+}
+
+
+/* ═══ 6d. ROADMAP PAGE (/dashboard?view=roadmap) ═══════════════════════
+   portal.js sets data-bb-roadmap on <html>, hides the dashboard content and
+   fills the page with the roadmap iframe. */
+
+html[data-bb-roadmap] .cp-main-content-inner > :not(#bb-roadmap-view) {
+  display: none !important;
+}
+/* Fill the portal's scroll area exactly, whatever the header height or
+   browser size: drop the 24px page padding and match its height. */
+html[data-bb-roadmap] .cp-main-content {
+  overflow: hidden !important;
+}
+html[data-bb-roadmap] .cp-main-content-inner {
+  padding: 0 !important;
+  height: 100%;
+  max-width: none !important;
+}
+#bb-roadmap-view {
+  height: 100%;
+  width: 100%;
+}
+#bb-roadmap-view > iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+
+/* ═══ 6a. DASHBOARD — NARROWER SCREENS ═════════════════════════════════ */
+
+@media (max-width: 1100px) {
+  #custom-cw-row,
+  #bb-top-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  #bb-right-col {
+    border-left: 0;
+    border-top: 1px solid #e4e7ec;
+  }
+  #bb-bob-box { height: 560px; }
+}
+@media (max-width: 720px) {
+  #continue-watching-section-root article > .flex {
+    flex-direction: column !important;
+  }
+  #continue-watching-section-root article > .flex > .shrink-0 {
+    width: 100% !important;
+    max-width: none;
+    padding: 16px 16px 0;
+  }
+  #continue-watching-section-root article .min-w-0.flex-1 {
+    padding: 20px !important;
+  }
 }
 
 
@@ -439,6 +991,7 @@
    The icon inherits via currentColor, so the link alone is enough.
    ════════════════════════════════════════════════════════════════════ */
 
+#custom-menu-roadmap-link.bg-primary,
 #custom-menu-calendar-link.bg-primary,
 #custom-menu-contact-link.bg-primary {
   color: #fff !important;
@@ -479,35 +1032,6 @@
    (Removed: the rules that hid the collapse button and pinned the menu at
    16rem. The menu now collapses and expands like the stock portal.)
    ════════════════════════════════════════════════════════════════════ */
-
-
-/* ═══ 9. SMALL SCREENS ═════════════════════════════════════════════════
-   MUST stay last. The 2:1 rules above have the same specificity as these,
-   so if this block sat higher in the file (as it did before), `flex: 2 1 0`
-   would win here and the stacked columns would size off a zero basis.
-   ════════════════════════════════════════════════════════════════════ */
-
-@media (max-width: 768px) {
-  #bb-top-row,
-  #bb-bottom-row {
-    flex-direction: column;
-  }
-
-  #bb-top-row > #continue-watching-section-root,
-  #bb-top-row > #bb-right-col,
-  #bb-bottom-row > #bb-help-col,
-  #bb-bottom-row > #bb-priority-courses {
-    flex: 1 1 auto;        /* height from content once stacked */
-    min-width: 0;
-  }
-
-  #bb-right-col,
-  #bb-top-row > #bb-right-col {
-    position: relative; /* stacked layout: no sticky, no viewport cap */
-    max-height: none;
-    min-height: 480px; /* Bob needs >= 240px; 480 keeps the message list usable */
-  }
-}
 
 
 /* ═══ 10. SITE-WIDE FOOTER ═════════════════════════════════════════════
