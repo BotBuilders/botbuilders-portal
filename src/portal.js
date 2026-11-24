@@ -972,7 +972,7 @@
     /* Course images + descriptions from the portal's own library endpoint,
        with the signed-in user's token. Cached for the session. Failure just
        means cards without images. */
-    const LIB_CACHE_KEY = "bb-course-lib";
+    const LIB_CACHE_KEY = "bb-course-lib2";
     let lib = null, libLoading = false;
     function loadLibrary(){
       if (lib || libLoading) return;
@@ -993,7 +993,12 @@
         const map = {};
         (Array.isArray(list) ? list : []).forEach(p => {
           if (!p || !p.id) return;
-          map[p.id] = { img: p.posterImage ? abs(p.posterImage) : "", desc: (p.description || "").trim() };
+          const info = { id: p.id, img: p.posterImage ? abs(p.posterImage) : "", desc: (p.description || "").trim() };
+          map[p.id] = info;
+          // also by title: another portal (e.g. the test one) has the same
+          // programs under different ids
+          const t = normalizeText(p.title || p.name || "");
+          if (t && !map["t:" + t]) map["t:" + t] = info;
         });
         lib = map;
         try { sessionStorage.setItem(LIB_CACHE_KEY, JSON.stringify({ ts: Date.now(), map })); } catch (e) {}
@@ -1026,8 +1031,10 @@
       const grid = document.createElement('div'); grid.className = 'bb-pg-grid';
       matched.forEach(c => {
         const id = c.link.split('/').pop();
-        const info = (lib && lib[id]) || {};
-        const card = document.createElement('a'); card.className = 'bb-pg-card'; card.href = c.link;
+        const info = (lib && (lib[id] || lib['t:' + normalizeText(c.name)])) || {};
+        // link on this portal, to its own copy of the program when found by title
+        const card = document.createElement('a'); card.className = 'bb-pg-card';
+        card.href = domain + '/courses/products/' + (info.id || id);
         const thumb = document.createElement('div'); thumb.className = 'bb-pg-thumb';
         if (info.img){
           const im = document.createElement('img'); im.src = info.img; im.alt = ''; im.loading = 'lazy';
