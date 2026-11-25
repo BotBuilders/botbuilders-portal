@@ -969,22 +969,36 @@
       if (panel.parentElement !== bProgs) bProgs.appendChild(panel);
       return panel;
     }
-    /* Course images + descriptions from the portal's own library endpoint,
-       with the signed-in user's token. Cached for the session. Failure just
-       means cards without images. */
-    const LIB_CACHE_KEY = "bb-course-lib2";
-    let lib = null, libLoading = false;
-    function loadLibrary(){
-      if (lib || libLoading) return;
-      try {
-        const c = JSON.parse(sessionStorage.getItem(LIB_CACHE_KEY) || "null");
-        if (c && Date.now() - c.ts < 30 * 60 * 1000){ lib = c.map; return; }
-      } catch (e) {}
+    /* Course images + descriptions from the portal's own library endpoint
+       (the same one My Programs uses), with the signed-in user's token.
+       A brand-new user's first answer can be empty or missing programs that
+       were only just granted, so: only a non-empty answer is cached, and
+       while any card still has no entry, injectCourses() asks again with a
+       growing delay (3s, 6s, 12s … up to 8 tries). Failure just means cards
+       without images until a retry succeeds. */
+    const LIB_CACHE_KEY = "bb-course-lib3";
+    let lib = null, libLoading = false, libVer = 0, libAt = 0, libTries = 0;
+    function libInfo(c){
+      if (!lib) return null;
+      return lib[c.link.split('/').pop()] || lib['t:' + normalizeText(c.name)] || null;
+    }
+    function loadLibrary(refresh){
+      if (libLoading) return;
+      if (refresh){
+        if (libTries >= 8 || Date.now() - libAt < 3000 * Math.pow(2, Math.max(0, libTries - 1))) return;
+      } else {
+        if (lib) return;
+        try {
+          const c = JSON.parse(sessionStorage.getItem(LIB_CACHE_KEY) || "null");
+          if (c && Date.now() - c.ts < 30 * 60 * 1000 && Object.keys(c.map).length){ lib = c.map; libVer++; return; }
+        } catch (e) {}
+      }
       const st = getPiniaState();
       const tok = st && st.auth && st.auth.token;
       const loc = st && st.location && st.location.locationId;
       if (!tok || !loc) return;              // not hydrated yet; next tick retries
       libLoading = true;
+      libTries++;
       fetch("https://services.leadconnectorhq.com/clientportal-middleware/courses/learners/locations/" + loc + "/courses/library", {
         headers: { Authorization: "Bearer " + tok, source: "PORTAL_USER", channel: "APP", version: "2021-07-28", "x-location-id": loc }
       }).then(r => r.ok ? r.json() : []).then(list => {
@@ -1000,9 +1014,12 @@
           const t = normalizeText(p.title || p.name || "");
           if (t && !map["t:" + t]) map["t:" + t] = info;
         });
-        lib = map;
-        try { sessionStorage.setItem(LIB_CACHE_KEY, JSON.stringify({ ts: Date.now(), map })); } catch (e) {}
-      }).catch(() => { lib = {}; }).finally(() => { libLoading = false; updateAll(); });
+        if (Object.keys(map).length || !lib) lib = map;   // never swap a good map for an empty one
+        if (Object.keys(map).length){
+          try { sessionStorage.setItem(LIB_CACHE_KEY, JSON.stringify({ ts: Date.now(), map })); } catch (e) {}
+        }
+      }).catch(() => { if (!lib) lib = {}; })
+        .finally(() => { libLoading = false; libAt = Date.now(); libVer++; updateAll(); });
     }
     function injectCourses(){
       const panel = ensurePanelShell();
@@ -1017,7 +1034,9 @@
         return;
       }
       const matched = (state.courseNames || []).map(n => byName.get(normalizeText(n))).filter(Boolean);
-      const sig = (matched.length ? matched.map(m => normalizeText(m.name)).join('|') : '__empty') + (lib ? '#lib' : '');
+      // a card with no library entry yet -> ask again (throttled inside)
+      if (lib && matched.some(c => !libInfo(c))) loadLibrary(true);
+      const sig = (matched.length ? matched.map(m => normalizeText(m.name)).join('|') : '__empty') + '#lib' + libVer;
       if (panel.getAttribute('data-sig') === sig) return;
       panel.setAttribute('data-sig', sig);
       body.innerHTML = '';
@@ -1031,7 +1050,7 @@
       const grid = document.createElement('div'); grid.className = 'bb-pg-grid';
       matched.forEach(c => {
         const id = c.link.split('/').pop();
-        const info = (lib && (lib[id] || lib['t:' + normalizeText(c.name)])) || {};
+        const info = libInfo(c) || {};
         // link on this portal, to its own copy of the program when found by title
         const card = document.createElement('a'); card.className = 'bb-pg-card';
         card.href = domain + '/courses/products/' + (info.id || id);
