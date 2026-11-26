@@ -284,12 +284,14 @@
        the page and "View details" only exist when it holds a valid http(s)
        URL; otherwise /dashboard?view=roadmap falls back to the dashboard. */
     const ROADMAP_PATH = "/dashboard?view=roadmap";
-    // "View details" opens the roadmap at its "Your Build" section (#yours),
-    // where the current MIT is the highlighted "YOUR MIT · START HERE" task
-    // with its tool and starting prompt. (#mitbox, the summary at the end of
-    // that section, ends up under the roadmap's sticky header.)
-    const ROADMAP_MIT_PATH = ROADMAP_PATH + "&at=mit";
-    const ROADMAP_MIT_ANCHOR = "yours";
+    // Each Accelerator "View details" opens the roadmap at its own section:
+    //   consulting -> #together  "09 How We Work Together" (your week, sessions)
+    //   systems    -> #ours      "05 Systems We Build"
+    //   mit        -> #yours     "07 What You Build", where the current MIT is
+    //                            the highlighted "YOUR MIT · START HERE" task.
+    //                            (#mitbox ends up under the sticky header.)
+    const ROADMAP_ANCHORS = { consulting: "together", systems: "ours", mit: "yours" };
+    const roadmapAt = (key) => ROADMAP_PATH + "&at=" + key;
     // Empty = no tag gate: the box shows for anyone whose fields below have
     // values. Add a tag (e.g. "accelerator - active") to also require it.
     const ACCEL_TAGS = [];
@@ -369,8 +371,9 @@
       let src = roadmapLink();
       const f = wrap.firstChild;
       if (!src) return;                  // still loading the contact's fields
-      if (new URLSearchParams(location.search).get("at") === "mit"){
-        const u = new URL(src); u.hash = ROADMAP_MIT_ANCHOR; src = u.href;
+      const at = ROADMAP_ANCHORS[new URLSearchParams(location.search).get("at")];
+      if (at){
+        const u = new URL(src); u.hash = at; src = u.href;
       }
       if (f.getAttribute("src") !== src) f.setAttribute("src", src);
     }
@@ -653,15 +656,21 @@
       };
       const grid = el("div", "bb-acc-grid");
 
-      if (total > 0){
-        const pct = Math.min(100, (done || 0) / total * 100);
-        const c = el("div", "bb-acc-item");
-        const top = el("div", "bb-acc-row"); top.appendChild(label("dashboard", "Systems Progress", ACCEL_TIPS.systems));
-        top.appendChild(el("span", "bb-acc-pct", Math.round(pct) + "%")); c.appendChild(top);
-        c.appendChild(bar(pct));
-        c.appendChild(el("div", "bb-acc-cap", (done || 0) + " of " + total + " systems built"));
-        grid.appendChild(c);
-      }
+      // "View details" -> the matching roadmap section (only with a roadmap link)
+      const details = (c, key) => {
+        if (!roadmapLink()) return;
+        const href = roadmapAt(key);
+        const v = el("a", "bb-acc-more", "View details");
+        v.href = href;
+        v.addEventListener("click", e => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+          const rt = getRouter();
+          if (rt && rt.push){ e.preventDefault(); rt.push(href); }
+        });
+        v.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>');
+        c.appendChild(v);
+      };
+      // Order: Consulting Status · Systems Progress · Your Current MIT
       if (start && end && end > start){
         const DAY = 864e5, now = Date.now();
         const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100));
@@ -672,23 +681,24 @@
         c.appendChild(bar(pct));
         const endTxt = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
         c.appendChild(el("div", "bb-acc-cap", (left ? left + (left === 1 ? " week" : " weeks") + " left" : "Completed") + " · ends " + endTxt));
+        details(c, "consulting");
+        grid.appendChild(c);
+      }
+      if (total > 0){
+        const pct = Math.min(100, (done || 0) / total * 100);
+        const c = el("div", "bb-acc-item");
+        const top = el("div", "bb-acc-row"); top.appendChild(label("dashboard", "Systems Progress", ACCEL_TIPS.systems));
+        top.appendChild(el("span", "bb-acc-pct", Math.round(pct) + "%")); c.appendChild(top);
+        c.appendChild(bar(pct));
+        c.appendChild(el("div", "bb-acc-cap", (done || 0) + " of " + total + " systems built"));
+        details(c, "systems");
         grid.appendChild(c);
       }
       if (a.mitName){
         const c = el("div", "bb-acc-item bb-acc-item--mit");
         const top = el("div", "bb-acc-row"); top.appendChild(label("loyalty", "Your Current MIT", ACCEL_TIPS.mit)); c.appendChild(top);
         c.appendChild(el("div", "bb-acc-mit", a.mitName));
-        if (roadmapLink()){
-          const v = el("a", "bb-acc-more", "View details");
-          v.href = ROADMAP_MIT_PATH;
-          v.addEventListener("click", e => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-            const rt = getRouter();
-            if (rt && rt.push){ e.preventDefault(); rt.push(ROADMAP_MIT_PATH); }
-          });
-          v.insertAdjacentHTML("beforeend", '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>');
-          c.appendChild(v);
-        }
+        details(c, "mit");
         grid.appendChild(c);
       }
       box.appendChild(grid);
@@ -961,7 +971,21 @@
           const rt = getRouter();
           if (rt && rt.push){ e.preventDefault(); rt.push("/courses/my-courses"); }
         });
-        head.appendChild(h); head.appendChild(cnt); head.appendChild(all);
+        // One row only: more cards than fit scroll sideways, with arrows
+        const nav = document.createElement("div"); nav.className = "bb-pc-nav"; nav.hidden = true;
+        const arrow = (dir, label, path) => {
+          const b = document.createElement("button"); b.type = "button"; b.className = "bb-pc-arrow";
+          b.setAttribute("aria-label", label); b.dataset.dir = dir;
+          b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + path + '"/></svg>';
+          b.addEventListener("click", () => {
+            const g = panel.querySelector(".bb-pg-grid"); if (!g) return;
+            g.scrollBy({ left: (dir === "next" ? 1 : -1) * g.clientWidth * 0.9, behavior: "smooth" });
+          });
+          return b;
+        };
+        nav.appendChild(arrow("prev", "Previous programs", "M15 6l-6 6 6 6"));
+        nav.appendChild(arrow("next", "Next programs", "M9 6l6 6-6 6"));
+        head.appendChild(h); head.appendChild(cnt); head.appendChild(all); head.appendChild(nav);
         panel.appendChild(head);
         const body = document.createElement("div"); body.className = "bb-pc-body";
         panel.appendChild(body);
@@ -1075,6 +1099,17 @@
         grid.appendChild(card);
       });
       body.appendChild(grid);
+      const syncNav = () => {
+        const nav = panel.querySelector(".bb-pc-nav"); if (!nav) return;
+        const over = grid.scrollWidth > grid.clientWidth + 2;
+        nav.hidden = !over;
+        const [prev, next] = nav.querySelectorAll("button");
+        prev.disabled = grid.scrollLeft <= 2;
+        next.disabled = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 2;
+      };
+      grid.addEventListener("scroll", syncNav, { passive: true });
+      if (window.ResizeObserver) new ResizeObserver(syncNav).observe(grid);
+      requestAnimationFrame(syncNav);
       if (!panel.__clickWired){
         panel.__clickWired = true;
         // soft navigation inside the portal; modifier-clicks open a new tab as normal

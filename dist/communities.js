@@ -1,5 +1,5 @@
-window.BB_VERSION = '1.0.22 · 2026-11-25';
-window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.22 · 2026-11-25' });
+window.BB_VERSION = '1.0.22 · 2026-11-26';
+window.BB_BUILDS = Object.assign(window.BB_BUILDS || {}, { communities: '1.0.22 · 2026-11-26' });
 window.BB_CDN = 'https://cdn.jsdelivr.net/gh/BotBuilders/botbuilders-portal@v1.0.22/dist';
 /* botbuilders-portal · communities.js · built from src/communities.js (3 script blocks) */
 

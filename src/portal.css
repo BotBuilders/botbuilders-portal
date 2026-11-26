@@ -108,7 +108,7 @@
 #bb-band-top {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   background: #fff;
 }
 #bb-band-progs {
@@ -125,7 +125,7 @@
 
 #bb-greeting {
   margin: 0;
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: clamp(24px, 2.2vw, 30px);
   line-height: 1.15;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -170,8 +170,8 @@
   padding: 0 !important;
   overflow: hidden;
   border-radius: 16px !important;
-  border: 1px solid #e4e7ec !important;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06) !important;
+  border: 1px solid #eaecf0 !important;
+  box-shadow: none !important;
 }
 /* the portal's heading moves into the text column as a small label (JS) */
 #continue-watching-section-root > div:has(> #continue-watching-section-heading) {
@@ -184,8 +184,8 @@
 }
 /* image keeps its true 16:9 shape (never cropped), inset like a framed tile */
 #continue-watching-section-root article > .flex > .shrink-0 {
-  width: 42% !important;
-  max-width: 600px;
+  width: 30% !important;
+  max-width: 340px;
   flex: 0 0 auto;
   padding: 16px 0 16px 16px;
   align-self: center;
@@ -352,12 +352,48 @@
   border-radius: 12px;
   background: #fff;
 }
+/* Always ONE row. Up to 4 cards share the width; more than fit scroll
+   sideways (arrows in the header, portal.js). Fewer per view on narrow
+   screens. The 1fr max lets 1-3 cards stretch to fill the row. */
+#bb-priority-courses { container-type: inline-size; }
 .bb-pg-grid {
+  --bb-pg-per: 4;
   display: grid;
-  /* auto-fit: the cards share the full row instead of leaving empty tracks */
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(calc((100% - (var(--bb-pg-per) - 1) * 18px) / var(--bb-pg-per)), 1fr);
   gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
+.bb-pg-grid::-webkit-scrollbar { display: none; }
+.bb-pg-grid > * { scroll-snap-align: start; }
+@container (max-width: 900px) { .bb-pg-grid { --bb-pg-per: 3; } }
+@container (max-width: 640px) { .bb-pg-grid { --bb-pg-per: 2; } }
+@container (max-width: 420px) { .bb-pg-grid { --bb-pg-per: 1.25; } }
+.bb-pc-nav {
+  display: flex;
+  gap: 6px;
+  margin-left: 4px;
+}
+.bb-pc-nav[hidden] { display: none !important; }
+.bb-pc-arrow {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.bb-pc-arrow svg { width: 16px; height: 16px; }
+.bb-pc-arrow:hover:not(:disabled) { border-color: #004eeb; color: #004eeb; }
+.bb-pc-arrow:disabled { opacity: .35; cursor: default; }
 .bb-pg-card {
   max-width: 520px;        /* a lone card doesn't stretch across the page */
   display: flex;
@@ -469,8 +505,8 @@
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 0;
   min-width: 0;
-  border: 1px solid #e4e7ec;
-  border-radius: 20px;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
   overflow: hidden;
   background: #fff;
 }
@@ -481,6 +517,18 @@
 }
 #bb-help-col > #bb-plan-card {
   padding: 18px 20px;
+  background: #f9fafb;
+  border-left: 1px solid #eaecf0;
+  color: #101828;
+}
+#bb-help-col > #bb-plan-card .bb-plan-title { color: #101828; font-size: 15px; font-weight: 700; }
+#bb-help-col > #bb-plan-card .bb-plan-tile { background: #fff; border-color: #eaecf0; }
+#bb-help-col > #bb-plan-card .bb-plan-label,
+#bb-help-col > #bb-plan-card .bb-plan-unit { color: #667085; }
+#bb-help-col > #bb-plan-card .bb-plan-value { color: #101828; }
+/* stacked (narrow): divider on top instead of the left */
+@container (max-width: 640px) {
+  #bb-help-col > #bb-plan-card { border-left: 0; border-top: 1px solid #eaecf0; }
 }
 #bb-help-col {
   container-type: inline-size;
@@ -632,10 +680,9 @@
   container-type: inline-size;
   position: relative;
   background: #fff;
-  border: 1px solid #e4e7ec;
-  border-radius: 20px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-  padding: 18px 22px 20px;
+  border: 1px solid #eaecf0;
+  border-radius: 16px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -649,7 +696,7 @@
   flex-wrap: wrap;
 }
 #bb-accel .bb-acc-logo {
-  height: 24px;
+  height: 20px;
   max-width: 60%;
   width: auto;
   display: block;
@@ -723,8 +770,7 @@
   border-radius: 6px;
 }
 #bb-accel .bb-acc-label strong {
-  font-weight: 700;
-  border-bottom: 1px dashed #98a2b3;
+  font-weight: 600;
 }
 #bb-accel .bb-acc-label:focus-visible { box-shadow: 0 0 0 3px rgba(0, 78, 235, .25); }
 #bb-accel .bb-acc-ico { display: inline-flex; color: #0b0f13; }
@@ -829,7 +875,7 @@
 #bb-events {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   padding: 20px 20px 24px;
 }
 #bb-events .bb-ev-head {
@@ -856,7 +902,8 @@
 }
 #bb-events .bb-ev-all svg { width: 14px; height: 14px; }
 #bb-events .bb-ev-day {
-  margin-top: 8px;
+  margin-top: 10px;
+  margin-bottom: 2px;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -866,12 +913,11 @@
 #bb-events .bb-ev-item {
   position: relative;
   display: block;
-  padding: 9px 12px 9px 16px;
-  border: 1px solid #eaecf0;
-  border-radius: 12px;
+  padding: 7px 10px 7px 16px;
+  border-radius: 10px;
   text-decoration: none;
-  background: #fff;
-  transition: border-color .15s, background .15s;
+  background: transparent;
+  transition: background .15s;
 }
 #bb-events .bb-ev-item::before {
   content: "";
@@ -884,7 +930,6 @@
   background: var(--ev, #004eeb);
 }
 #bb-events .bb-ev-item:hover {
-  border-color: #b2ccff;
   background: #f5f8ff;
 }
 #bb-events .bb-ev-title {
@@ -921,6 +966,63 @@
   background-size: 400% 100%;
   animation: bb-pulse 1.4s ease infinite;
 }
+
+
+/* ═══ 6c-2. COMPACT: Accelerator + Need Help / Inner Circle ════════════
+   Both kept short so Pick up and the programs sit higher on the page.
+   Accelerator: logo stays on top (upper left), with tighter spacing.
+   Need Help: icon · title + blurb · button in one row.
+   Inner Circle: title beside its two tiles. */
+
+#bb-accel {
+  padding: 14px 20px;
+  gap: 10px;
+}
+#bb-accel .bb-acc-item { gap: 6px; }
+
+#bb-help-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 14px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 14px 20px;
+}
+#bb-help-card .bb-help-top { display: contents; }
+#bb-help-card .bb-help-icon { grid-column: 1; grid-row: 1 / span 2; }
+#bb-help-card h2 { grid-column: 2; grid-row: 1; font-size: 15px; }
+#bb-help-card .bb-help-body {
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 12.5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#bb-help-card .bb-help-btn {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  margin-top: 0;
+  align-self: center;
+  white-space: nowrap;
+}
+
+#bb-help-col > #bb-plan-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+}
+#bb-help-col > #bb-plan-card .bb-plan-title { flex: 0 0 auto; }
+#bb-help-col > #bb-plan-card .bb-plan-tiles {
+  flex: 1 1 auto;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+#bb-help-col > #bb-plan-card .bb-plan-tile { padding: 7px 12px; }
+#bb-help-col > #bb-plan-card .bb-plan-value { font-size: 17px; }
 
 
 /* ═══ 6d. ROADMAP PAGE (/dashboard?view=roadmap) ═══════════════════════
